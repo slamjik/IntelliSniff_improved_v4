@@ -1,0 +1,7 @@
+scapy
+PySide6
+pandas
+reportlab
+matplotlib
+pyyaml
+pyshark

@@ -1,0 +1,9 @@
+vpn:
+  udp_ports: [1194, 51820]
+  ip_proto:
+    50: IPsec-ESP
+    47: GRE
+  ike_ports: [500, 4500]
+apps:
+  video: [1935, 554, 3478]
+  games: [27015, 3074]
