@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Traffic Analyzer Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>body{font-family:Arial;padding:20px}#charts{display:flex;gap:20px}</style>
+</head>
+<body>
+  <h1>Traffic Analyzer</h1>
+  <div>
+    <button onclick="start()">Start capture</button>
+    <button onclick="stop()">Stop capture</button>
+    <button onclick="train()">Train model</button>
+    <button onclick="downloadCSV()">CSV</button>
+    <button onclick="downloadPDF()">PDF</button>
+  </div>
+  <div id="charts">
+    <canvas id="labelsChart" width="400" height="200"></canvas>
+  </div>
+  <script>
+    let ws = new WebSocket("ws://"+location.host+"/ws/live");
+    ws.onopen = ()=>console.log('ws open');
+    ws.onmessage = (m)=>{ console.log('ws', m.data); }
+    async function stat(){ let r=await fetch('/stats?limit=200'); let j=await r.json(); return j.rows; }
+    function agg(rows){
+      let bylabel={};
+      for(let r of rows){ let lab = r[6]||'unknown'; bylabel[lab]=(bylabel[lab]||0)+1; }
+      return bylabel;
+    }
+    async function rebuild(){
+      let rows = await stat();
+      let aggdata = agg(rows);
+      updateChart(Object.keys(aggdata), Object.values(aggdata));
+    }
+    function start(){ fetch('/start_capture', {method:'POST'}).then(()=>console.log('started')); }
+    function stop(){ fetch('/stop_capture', {method:'POST'}).then(()=>console.log('stopping')); }
+    function train(){ fetch('/train_model', {method:'POST'}).then(()=>rebuild()); }
+    function downloadCSV(){ location.href='/report/csv'; }
+    function downloadPDF(){ location.href='/report/pdf'; }
+    const ctx = document.getElementById('labelsChart').getContext('2d');
+    let chart = new Chart(ctx, { type: 'bar', data: { labels: [], datasets: [{ label:'Flows by label', data: [] }] }, options: {} });
+    function updateChart(labels, data){ chart.data.labels = labels; chart.data.datasets[0].data = data; chart.update(); }
+    setInterval(rebuild, 3000);
+    rebuild();
+  </script>
+</body>
+</html>

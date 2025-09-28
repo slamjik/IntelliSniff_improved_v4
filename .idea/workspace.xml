@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/IntelliSniff_improved_v4.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/IntelliSniff_improved_v4.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README_ru.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/__main__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/analysis.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/assets/rules.example.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/assets/traffic_signatures.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/capture.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/core/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/core/capture.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/core/classifier.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/core/detections.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/core/dpi_rules.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/core/pyshark_backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/io/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/io/exporters.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/models.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/reports.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/app.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/models.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/style.qss" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/intellinsniff/utils.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_tests.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup_win.bat" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;slamjik&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/slamjik/IntelliSniff_improved_v4.git&quot;,
+    &quot;accountId&quot;: &quot;588e7d49-3916-45cb-bdc4-dd9bce643f71&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="33JYj5vqj0KLRshnr1HD6cGybVB" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-7e47963ff851-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.515" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="" />
+      <created>1759036774673</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1759036774673</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/main" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
