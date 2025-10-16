@@ -1,137 +1,153 @@
-
 <!doctype html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>Traffic Analyzer — Панель управления</title>
+  <title>IntelliSniff — Центр мониторинга трафика</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body{font-family:Arial;padding:20px;max-width:1200px;margin:auto}
-    header{display:flex;justify-content:space-between;align-items:center}
-    .controls{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
-    .panel{border:1px solid #ddd;padding:12px;border-radius:8px;margin-top:12px}
-    #charts{display:flex;gap:20px;flex-wrap:wrap}
-    #charts canvas{background:#fff;border:1px solid #eee;padding:6px;border-radius:6px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:6px;border:1px solid #eee;text-align:left;font-size:12px}
-    .status{font-weight:bold}
-  </style>
+  <script defer src="{{ url_for('static', path='app.js') }}"></script>
 </head>
 <body>
-  <header>
-    <h1>Traffic Analyzer — Панель управления</h1>
+  <div id="authOverlay" class="auth-overlay hidden">
+    <form id="authForm" class="auth-card">
+      <h2>Вход в IntelliSniff</h2>
+      <p class="auth-subtitle">Используйте учётную запись администратора (HTTP Basic).</p>
+      <label>
+        Логин
+        <input type="text" id="authLogin" autocomplete="username" required>
+      </label>
+      <label>
+        Пароль
+        <input type="password" id="authPassword" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Войти</button>
+      <p class="auth-hint">По умолчанию: <code>admin / changeme</code>. Настройте переменные окружения <code>TA_USER</code>, <code>TA_PASS</code>.</p>
+    </form>
+  </div>
+
+  <header class="page-header">
     <div>
-      <span>Пользователь: {{request.client.host}}</span>
+      <h1>IntelliSniff</h1>
+      <p class="subtitle">Интерактивная панель анализа сетевых потоков</p>
+    </div>
+    <div class="header-meta">
+      <div id="statusBadge" class="status-badge status-idle">Ожидание</div>
+      <div class="user-meta">Ваш IP: {{ request.client.host }}</div>
     </div>
   </header>
 
-  <div class="panel">
-    <div class="controls">
-      <label>Интерфейс: <input id="iface" placeholder="eth0 / en0 / any" /></label>
-      <label>BPF-фильтр: <input id="bpf" placeholder="tcp port 80" /></label>
-      <label><input type="checkbox" id="use_nfstream"/> Использовать NFStream (DPI если доступен)</label>
-      <button id="startBtn">Запустить захват</button>
-      <button id="stopBtn">Остановить захват</button>
-      <button id="trainBtn">Обучить модель (демо)</button>
-      <button id="csvBtn">Скачать CSV</button>
-      <button id="pdfBtn">Скачать PDF</button>
-      <div style="margin-left:12px">Статус: <span id="status" class="status">idle</span></div>
+  <section class="controls-card">
+    <div class="controls-grid">
+      <label>
+        Интерфейс
+        <select id="iface">
+          <option value="">Авто</option>
+        </select>
+      </label>
+      <label>
+        BPF-фильтр
+        <input id="bpf" placeholder="tcp port 80">
+      </label>
+      <label>
+        Таймаут потока (с)
+        <input id="flowTimeout" type="number" min="1" max="600" step="1" value="30">
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" id="use_nfstream"> Глубокий анализ NFStream
+      </label>
+      <div class="buttons">
+        <button id="startBtn" class="primary">Запустить захват</button>
+        <button id="stopBtn" class="ghost">Остановить</button>
+      </div>
+      <div class="buttons">
+        <button id="trainBtn" class="ghost">Переобучить модель</button>
+        <button id="csvBtn" class="ghost">Экспорт CSV</button>
+        <button id="pdfBtn" class="ghost">Экспорт PDF</button>
+      </div>
     </div>
-    <div style="margin-top:8px;color:#555;font-size:13px">
-      Управление происходит через HTTP Basic авторизацию. По умолчанию admin/changeme — замените переменные TA_USER/TA_PASS.
+    <div id="statusDetails" class="status-details"></div>
+  </section>
+
+  <section class="cards-grid">
+    <div class="info-card">
+      <h3>Всего потоков</h3>
+      <div class="metric" id="totalFlows">0</div>
+      <span class="hint">Количество потоков за последнюю сессию</span>
     </div>
-  </div>
-
-  <div id="charts" class="panel">
-    <div style="flex:1;min-width:320px">
-      <h3>Потоки по меткам</h3>
-      <canvas id="labelsChart" width="400" height="200"></canvas>
+    <div class="info-card">
+      <h3>Подозрительные</h3>
+      <div class="metric warning" id="suspiciousFlows">0</div>
+      <span class="hint">Метки, отличные от "web" / "benign"</span>
     </div>
-    <div style="flex:1;min-width:320px">
-      <h3>Трафик (пакеты/с)</h3>
-      <canvas id="trafficChart" width="400" height="200"></canvas>
+    <div class="info-card">
+      <h3>Средняя пропускная способность</h3>
+      <div class="metric" id="bandwidth">0 КБ/с</div>
+      <span class="hint">По последним потокам</span>
     </div>
-  </div>
+    <div class="info-card">
+      <h3>Последний поток</h3>
+      <div class="metric" id="lastFlowLabel">—</div>
+      <span class="hint" id="lastFlowSummary">Ожидание данных</span>
+    </div>
+  </section>
 
-  <div class="panel">
-    <h3>Последние потоки</h3>
-    <table id="flowsTable">
-      <thead><tr><th>ts</th><th>src</th><th>dst</th><th>sport</th><th>dport</th><th>label</th><th>score</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <section class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Распределение меток</h3>
+        <select id="labelFilter">
+          <option value="all" selected>Все метки</option>
+        </select>
+      </div>
+      <canvas id="labelsChart" width="420" height="260"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Интенсивность пакетов</h3>
+      <canvas id="trafficChart" width="420" height="260"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Топ направлений</h3>
+      <canvas id="destChart" width="420" height="260"></canvas>
+    </div>
+  </section>
 
-  <script>
-    const authHeader = 'Basic ' + btoa(prompt('Логин:') + ':' + prompt('Пароль:'));
-    function headers(){ return { 'Authorization': authHeader, 'Content-Type':'application/json' }; }
+  <section class="table-card">
+    <div class="table-header">
+      <h3>Последние потоки</h3>
+      <div class="table-controls">
+        <label>Поиск <input type="search" id="tableSearch" placeholder="IP, порт или метка"></label>
+        <span id="tableCounter">0 записей</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table id="flowsTable">
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Источник</th>
+            <th>Назначение</th>
+            <th>Порты</th>
+            <th>Протокол</th>
+            <th>Метка</th>
+            <th>Вероятность</th>
+            <th>Пакеты</th>
+            <th>Байты</th>
+            <th>Сводка</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
 
-    document.getElementById('startBtn').onclick = async () => {
-      const iface = document.getElementById('iface').value || null;
-      const use_nfstream = document.getElementById('use_nfstream').checked || false;
-      const bpf = document.getElementById('bpf').value || null;
-      document.getElementById('status').innerText = 'starting...';
-      await fetch('/start_capture', {method:'POST', headers: headers(), body: JSON.stringify({iface: iface, bpf: bpf, use_nfstream: use_nfstream})});
-      document.getElementById('status').innerText = 'running';
-    };
-    document.getElementById('stopBtn').onclick = async () => {
-      await fetch('/stop_capture', {method:'POST', headers: headers()});
-      document.getElementById('status').innerText = 'stopped';
-    };
-    document.getElementById('trainBtn').onclick = async () => {
-      document.getElementById('status').innerText = 'training...';
-      await fetch('/train_model', {method:'POST', headers: headers(), body: JSON.stringify({demo:true})});
-      setTimeout(()=>document.getElementById('status').innerText = 'idle', 2000);
-    };
-    document.getElementById('csvBtn').onclick = () => { window.location='/report/csv'; }
-    document.getElementById('pdfBtn').onclick = () => { window.location='/report/pdf'; }
-
-    // charts
-    const labelsCtx = document.getElementById('labelsChart').getContext('2d');
-    const labelsChart = new Chart(labelsCtx, { type: 'bar', data: { labels: [], datasets:[{label:'Потоки', data:[]}] }, options:{} });
-
-    const trafficCtx = document.getElementById('trafficChart').getContext('2d');
-    const trafficChart = new Chart(trafficCtx, { type: 'line', data: { labels: [], datasets:[{label:'пакеты/с', data:[]}] }, options:{} });
-
-    // flows table update
-    function addFlowToTable(f){
-      const tb = document.querySelector('#flowsTable tbody');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${f.ts||''}</td><td>${f.src||''}</td><td>${f.dst||''}</td><td>${f.sport||''}</td><td>${f.dport||''}</td><td>${f.label||''}</td><td>${(f.score||'').toFixed? (f.score||0).toFixed(2) : f.score}</td>`;
-      tb.insertBefore(tr, tb.firstChild);
-      // keep only 100 rows
-      while(tb.children.length>100) tb.removeChild(tb.lastChild);
-    }
-
-    // websocket connection
-    let ws;
-    function connectWS(){
-      ws = new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws/live');
-      ws.onopen = ()=>console.log('ws open');
-      ws.onmessage = (e)=>{
-        try{
-          const msg = JSON.parse(e.data);
-          if(msg.topic === 'flow'){
-            const data = msg.data;
-            addFlowToTable(data);
-            // update labels chart counts
-            const label = data.label || 'unknown';
-            let idx = labelsChart.data.labels.indexOf(label);
-            if(idx === -1){ labelsChart.data.labels.push(label); labelsChart.data.datasets[0].data.push(1); }
-            else labelsChart.data.datasets[0].data[idx] += 1;
-            labelsChart.update();
-            // traffic chart: use timestamp as label
-            const t = new Date().toLocaleTimeString();
-            trafficChart.data.labels.push(t);
-            trafficChart.data.datasets[0].data.push(data.packets || 0);
-            if(trafficChart.data.labels.length>20){ trafficChart.data.labels.shift(); trafficChart.data.datasets[0].data.shift(); }
-            trafficChart.update();
-          }
-        }catch(err){ console.error(err); }
-      };
-      ws.onclose = ()=>{ console.log('ws closed, reconnect in 2s'); setTimeout(connectWS,2000); };
-      ws.onerror = (e)=>console.error('ws err', e);
-    }
-    connectWS();
-  </script>
+  <footer class="page-footer">
+    <div>
+      Версия панели IntelliSniff · NFStream: <span id="nfStatus">—</span>
+    </div>
+    <div>
+      При возникновении проблем проверьте настройки прав доступа к сетевому интерфейсу и модель <code>data/model.joblib</code>.
+    </div>
+  </footer>
 </body>
 </html>

@@ -1,4 +1,5 @@
 # traffic_analyzer/storage.py
+import json
 import os, sqlite3, threading, time
 from typing import Dict, Any, List
 
@@ -37,6 +38,11 @@ class Storage:
     def insert_flow(self, flow: Dict[str,Any]):
         with self._lock:
             with self._conn() as c:
+                summary = flow.get('summary')
+                if isinstance(summary, (dict, list)):
+                    summary_value = json.dumps(summary, ensure_ascii=False)
+                else:
+                    summary_value = str(summary or '')
                 c.execute("""INSERT INTO flows (ts,iface,src,dst,sport,dport,proto,packets,bytes,label,score,summary)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""", (
                     float(flow.get('ts') or time.time()),
@@ -50,7 +56,7 @@ class Storage:
                     int(flow.get('bytes') or 0),
                     flow.get('label') or 'unknown',
                     float(flow.get('score') or 0.0),
-                    str(flow.get('summary') or '')
+                    summary_value
                 ))
                 c.commit()
 

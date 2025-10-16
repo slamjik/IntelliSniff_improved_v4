@@ -9,6 +9,7 @@ python-multipart
 aiofiles
 reportlab
 nfstream
+httpx
 
 pytest
 pytest-asyncio

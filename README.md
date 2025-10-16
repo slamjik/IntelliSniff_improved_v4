@@ -11,6 +11,17 @@ This is an expanded version of TrafficAnalyzer with more production-oriented fea
 - Model training and persistence with scikit-learn
 - Health checks and graceful shutdown
 
+### What is new in this iteration?
+
+- Полностью переработанный веб-интерфейс на русском языке: карточки показателей, фильтр по меткам,
+  всплывающие подсказки, мгновенный поиск по таблице и удобный экран входа вместо всплывающих `prompt`.
+- Живая аналитика: диаграммы по распределению меток, интенсивности трафика и топу направлений
+  автоматически обновляются через WebSocket.
+- Расширенный REST API (`/health`, `/status`, `/interfaces`, `/flows/recent`) для интеграции, а также
+  структурированные ответы с метаданными потоков (скорость, длительность, хосты TLS/DNS/HTTP).
+- Улучшенная обработка потоков: исправлена загрузка модели, добавлены расширенные признаки, корректное
+  завершение потоков при остановке захвата и более информативные записи в хранилище.
+
 Quick start (local):
 1. Create venv and install requirements:
    python -m venv venv
