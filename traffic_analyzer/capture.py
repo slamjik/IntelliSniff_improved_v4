@@ -1,7 +1,7 @@
-
 import logging, threading, time
 import socket
 from typing import Iterable, Optional
+import psutil
 
 from .streaming import handle_packet, init_streaming, stop_streaming
 from .nfstream_helper import NFSTREAM_AVAILABLE, make_streamer, iterate_flows_from_streamer
@@ -15,6 +15,7 @@ except Exception:
     SCAPY_AVAILABLE = False
 
 _sniffer = None
+_sniffers = []  # список для мульти-захвата
 _sniffer_lock = threading.Lock()
 _nf_thread = None
 _nf_stop = False
@@ -28,20 +29,8 @@ _status = {
 }
 
 _VIRTUAL_KEYWORDS = (
-    "loopback",
-    "virtual",
-    "vmware",
-    "hyper-v",
-    "docker",
-    "br-",
-    "veth",
-    "tap",
-    "tun",
-    "pseudo",
-    "awdl",
-    "nflog",
-    "nfqueue",
-    "ppp",
+    "loopback", "virtual", "vmware", "hyper-v", "docker", "br-", "veth",
+    "tap", "tun", "pseudo", "awdl", "nflog", "nfqueue", "ppp"
 )
 
 
@@ -63,7 +52,7 @@ def _filter_interfaces(candidates: Iterable[str]) -> list[str]:
 
 
 def list_ifaces():
-    """Return available interfaces (fallback to socket.if_nameindex when scapy missing)."""
+    """Return available interfaces with IPs and add 'All interfaces' option."""
     candidates = []
     if SCAPY_AVAILABLE:
         try:
@@ -75,7 +64,29 @@ def list_ifaces():
             candidates.extend(name for _, name in socket.if_nameindex())
         except Exception:
             pass
-    return _filter_interfaces(candidates)
+
+    filtered = _filter_interfaces(candidates)
+
+    # добавим IP для каждого интерфейса, если можем
+    try:
+        addrs = psutil.net_if_addrs()
+        named = []
+        for iface in filtered:
+            ips = [
+                snic.address
+                for snic in addrs.get(iface, [])
+                if snic.family == socket.AF_INET
+            ]
+            if not ips:
+                continue  # пропускаем интерфейсы без IP
+            label = f"{iface} ({ips[0]})"
+            named.append(label)
+        named.insert(0, "All interfaces")
+        return named
+    except Exception:
+        filtered.insert(0, "All interfaces")
+        return filtered
+
 
 def _call_if_callable(value):
     if callable(value):
@@ -90,10 +101,8 @@ def _pkt_to_dict(pkt):
     """Normalize scapy packet or dict-like flow into expected dict for handle_packet."""
     if pkt is None:
         return None
-    # if already dict (e.g., from NFStream helper), trust keys
     if isinstance(pkt, dict):
         return pkt
-    # scapy Packet: try to extract basic info
     try:
         def g(attr_name, fallback=None):
             value = getattr(pkt, attr_name, fallback)
@@ -105,11 +114,7 @@ def _pkt_to_dict(pkt):
         dport = g('dport') or g('dst_port')
         proto = g('proto') or g('proto')
         ts = g('time')
-        length = g('len')
-        if length is None:
-            length = g('length')
-        if length is None:
-            length = g('__len__')
+        length = g('len') or g('length') or g('__len__')
         iface = g('sniffed_on') or g('iface')
 
         def to_int(val):
@@ -150,6 +155,7 @@ def _pkt_to_dict(pkt):
     except Exception:
         return None
 
+
 def _on_packet(pkt):
     pd = _pkt_to_dict(pkt)
     if pd is None:
@@ -158,6 +164,7 @@ def _on_packet(pkt):
         handle_packet(pd)
     except Exception:
         log.exception("handle_packet failed")
+
 
 def _run_nfstream(interface=None, pcap=None, flow_timeout: float = 30.0):
     """Run NFStreamer loop and forward flows to handle_packet."""
@@ -171,7 +178,6 @@ def _run_nfstream(interface=None, pcap=None, flow_timeout: float = 30.0):
         if _nf_stop:
             break
         try:
-            # normalize flow to dict
             pkt = {
                 'ts': getattr(flow, 'timestamp', None),
                 'src': getattr(flow, 'src_ip', None),
@@ -195,14 +201,26 @@ def _run_nfstream(interface=None, pcap=None, flow_timeout: float = 30.0):
     except Exception:
         pass
 
+
 def start_capture(iface: Optional[str] = None, bpf: Optional[str] = None,
                   flow_timeout: float = 30.0, use_nfstream: bool = False):
-    """Start packet capture. If use_nfstream True and NFStream is available, use NFStream; otherwise use scapy AsyncSniffer."""
-    global _sniffer, _nf_thread, _nf_stop
+    """Start packet capture. Supports 'All interfaces' or auto-detection."""
+    global _sniffer, _sniffers, _nf_thread, _nf_stop
     with _sniffer_lock:
-        if _sniffer is not None or (_nf_thread is not None and _nf_thread.is_alive()):
+        if _sniffer or _sniffers or (_nf_thread and _nf_thread.is_alive()):
             log.warning("Capture already running")
             return
+
+        # Если iface не задан — выбираем первый активный
+        if not iface or iface.strip() == "" or iface.lower() == "auto":
+            all_ifaces = list_ifaces()
+            if not all_ifaces:
+                log.error("No interfaces found for auto mode.")
+                return
+            # пропускаем пункт All interfaces
+            iface = next((i for i in all_ifaces if i != "All interfaces"), all_ifaces[0])
+            log.info(f"Auto-selected interface: {iface}")
+
         init_streaming(flow_timeout=flow_timeout)
         _status.update({
             'running': True,
@@ -212,6 +230,24 @@ def start_capture(iface: Optional[str] = None, bpf: Optional[str] = None,
             'use_nfstream': bool(use_nfstream and NFSTREAM_AVAILABLE),
             'flow_timeout': flow_timeout,
         })
+
+        # "All interfaces" → множественный захват
+        if iface == "All interfaces":
+            _sniffers = []
+            for ifname in list_ifaces():
+                if ifname == "All interfaces":
+                    continue
+                try:
+                    base_name = ifname.split(' ')[0]
+                    sniffer = AsyncSniffer(iface=base_name, filter=bpf, prn=_on_packet, store=False)
+                    sniffer.start()
+                    _sniffers.append(sniffer)
+                    log.info(f"Started sniffer on {ifname}")
+                except Exception:
+                    log.exception(f"Failed to start sniffer on {ifname}")
+            return
+
+        # NFStream вариант
         if use_nfstream and NFSTREAM_AVAILABLE:
             log.info("Starting NFStream-based capture")
             _nf_thread = threading.Thread(
@@ -221,23 +257,27 @@ def start_capture(iface: Optional[str] = None, bpf: Optional[str] = None,
             )
             _nf_thread.start()
             return
-        # fallback to scapy
+
+        # Scapy fallback
         if not SCAPY_AVAILABLE:
             log.error("Scapy is not available; cannot start AsyncSniffer")
             _status['running'] = False
             return
         try:
-            _sniffer = AsyncSniffer(iface=iface, filter=bpf, prn=_on_packet, store=False)
+            base_name = iface.split(' ')[0]
+            _sniffer = AsyncSniffer(iface=base_name, filter=bpf, prn=_on_packet, store=False)
             _sniffer.start()
-            log.info("AsyncSniffer started on iface=%s with bpf=%s", iface, bpf)
+            log.info(f"AsyncSniffer started on iface={base_name}")
         except Exception:
             log.exception("Failed to start AsyncSniffer")
             _sniffer = None
             _status['running'] = False
 
+
+
 def stop_capture():
-    """Stop any running capture (scapy or nfstream)"""
-    global _sniffer, _nf_thread, _nf_stop
+    """Stop all running captures (scapy or nfstream)."""
+    global _sniffer, _sniffers, _nf_thread, _nf_stop
     with _sniffer_lock:
         if _sniffer:
             try:
@@ -245,28 +285,38 @@ def stop_capture():
             except Exception:
                 pass
             _sniffer = None
-        # stop NFStream
+
+        if _sniffers:
+            for s in _sniffers:
+                try:
+                    s.stop()
+                except Exception:
+                    pass
+            _sniffers.clear()
+
         _nf_stop = True
-        if _nf_thread is not None:
+        if _nf_thread:
             try:
                 _nf_thread.join(timeout=2)
             except Exception:
                 pass
             _nf_thread = None
+
         stop_streaming()
-        _status.update({
-            'running': False,
-            'stopped_at': time.time(),
-        })
-        log.info("Capture stopped")
+        _status.update({'running': False, 'stopped_at': time.time()})
+        log.info("All captures stopped")
+
 
 def is_running() -> bool:
     with _sniffer_lock:
         if _sniffer and getattr(_sniffer, 'running', False):
             return True
+        if any(getattr(s, 'running', False) for s in _sniffers):
+            return True
         if _nf_thread and _nf_thread.is_alive():
             return True
     return False
+
 
 def get_status():
     """Return current capture status snapshot."""
