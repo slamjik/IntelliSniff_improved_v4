@@ -133,7 +133,10 @@ def api_train(
         try:
             from . import train_model
 
-            train_model.train_and_save(demo=payload.demo)
+            if payload.demo:
+                train_model.train_demo_model()
+            else:
+                train_model.train_from_dataset()
         except Exception as e:
             print("Training failed:", e)
 

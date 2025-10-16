@@ -1,18 +1,19 @@
 
-import os
 import re
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-from pathlib import Path
 from scipy.io import arff
 from sklearn.utils import resample
+from tqdm import tqdm
 
 # === ПУТИ ===================================================================
-BASE = r"C:\Users\Olega\PycharmProjects\IntelliSniff_improved_v4\datasets"
-OUT_PARQUET = os.path.join(BASE, "merged_detailed.parquet")
-OUT_REPORT = os.path.join(BASE, "merge_report.csv")
-os.makedirs(BASE, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
+DATASETS_DIR = (BASE_DIR.parent / "datasets").resolve()
+OUT_PARQUET = DATASETS_DIR / "merged_detailed.parquet"
+OUT_REPORT = DATASETS_DIR / "merge_report.csv"
+DATASETS_DIR.mkdir(parents=True, exist_ok=True)
 
 # === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ================================================
 def make_unique_columns(columns):
@@ -122,14 +123,16 @@ def map_label_columns(label_series):
 # === ЧТЕНИЕ ==================================================================
 def read_any(path):
     """Загружает CSV, Parquet или ARFF"""
-    if path.endswith(".csv"):
+    path = Path(path)
+    suffix = path.suffix.lower()
+    if suffix == ".csv":
         return pd.read_csv(path, low_memory=False)
-    elif path.endswith(".parquet"):
+    if suffix == ".parquet":
         return pd.read_parquet(path)
-    elif path.endswith(".arff"):
-        data, meta = arff.loadarff(path)
+    if suffix == ".arff":
+        data, _ = arff.loadarff(path)
         df = pd.DataFrame(data)
-        df = df.map(lambda x: x.decode("utf-8") if isinstance(x, bytes) else x)
+        df = df.applymap(lambda x: x.decode("utf-8") if isinstance(x, (bytes, bytearray)) else x)
         df = df.replace("", np.nan).dropna(how="all")
         return df
     else:
@@ -138,13 +141,13 @@ def read_any(path):
 
 # === ГЛАВНАЯ ФУНКЦИЯ =========================================================
 def process():
-    if os.path.exists(OUT_PARQUET):
-        os.remove(OUT_PARQUET)
+    if OUT_PARQUET.exists():
+        OUT_PARQUET.unlink()
         print(f"🧹 Old file removed: {OUT_PARQUET}")
 
-    files = [str(p) for p in Path(BASE).rglob("*") if p.suffix.lower() in (".csv", ".parquet", ".arff")]
+    files = [p for p in DATASETS_DIR.rglob("*") if p.suffix.lower() in (".csv", ".parquet", ".arff")]
     if not files:
-        print("❌ No datasets found in", BASE)
+        print("❌ No datasets found in", DATASETS_DIR)
         return
 
     print(f"🔍 Found {len(files)} dataset files\n")
@@ -174,9 +177,9 @@ def process():
             df = optimize_dtypes(df)
 
             parts.append(df)
-            stats.append((os.path.basename(f), len(df)))
+            stats.append((f.name, len(df)))
         except Exception as e:
-            print(f"⚠️ {os.path.basename(f)}: {e}")
+            print(f"⚠️ {f.name}: {e}")
 
     if not parts:
         print("❌ No datasets processed")
@@ -210,5 +213,9 @@ def process():
 
 
 # === MAIN ===================================================================
-if __name__ == "__main__":
+def main():
     process()
+
+
+if __name__ == "__main__":
+    main()

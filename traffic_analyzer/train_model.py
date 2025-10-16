@@ -1,13 +1,15 @@
+import argparse
 import os
 import sys
 import time
-import joblib
 import logging
-import pandas as pd
+
+import joblib
 import numpy as np
-from sklearn.model_selection import train_test_split
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 # === ПУТИ ===============================================================
@@ -82,7 +84,7 @@ def train_and_save(X, y, out_path=MODEL_PATH):
     joblib.dump({
         "model": clf,
         "features": X.columns.tolist(),
-        "trained_at": time.time()
+        "trained_at": time.time(),
     }, out_path)
 
     print(f"💾 Model saved to: {out_path}")
@@ -112,11 +114,68 @@ def retrain_if_needed(force=False):
     return MODEL_PATH
 
 
+def train_from_dataset(dataset_path=None, label_type="binary", out_path=MODEL_PATH):
+    """Высокоуровневая обёртка: загрузить датасет и обучить модель."""
+    dataset_path = dataset_path or DATASET_PATH
+    if not os.path.exists(dataset_path):
+        raise FileNotFoundError(f"Dataset not found: {dataset_path}")
+    X, y = load_dataset(path=dataset_path, label_type=label_type)
+    return train_and_save(X, y, out_path=out_path)
+
+
+def train_demo_model(out_path=MODEL_PATH):
+    """Обучает синтетическую демо-модель (используется в UI)."""
+    from .classification import train_demo_model as _train_demo_model
+
+    return _train_demo_model(out_path)
+
+
+def main(argv=None):
+    """CLI-вход для python -m traffic_analyzer.train_model"""
+    parser = argparse.ArgumentParser(description="Train IntelliSniff model")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default=None,
+        help="Путь к parquet/csv датасету (по умолчанию datasets/merged_detailed.parquet)",
+    )
+    parser.add_argument(
+        "--label-type",
+        choices=["binary", "multi"],
+        default="binary",
+        help="Тип меток для обучения",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Игнорировать проверку времени модификации модели при --retrain-if-needed",
+    )
+    parser.add_argument(
+        "--retrain-if-needed",
+        action="store_true",
+        help="Переобучить модель только если датасет новее существующей модели",
+    )
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Обучить синтетическую демо-модель вместо реального датасета",
+    )
+    args = parser.parse_args(argv)
+
+    if args.demo:
+        path = train_demo_model()
+        print(f"✅ Demo model saved to {path}")
+        return path
+
+    if args.retrain_if_needed:
+        return retrain_if_needed(force=args.force)
+
+    dataset_path = args.dataset or DATASET_PATH
+    result = train_from_dataset(dataset_path, args.label_type)
+    print(f"✅ Model trained from {dataset_path} -> {result}")
+    return result
+
+
 # === MAIN ================================================================
 if __name__ == "__main__":
-    label_mode = "binary"  # можно также "multi"
-    if len(sys.argv) > 1 and sys.argv[1] in ("binary", "multi"):
-        label_mode = sys.argv[1]
-
-    X, y = load_dataset(label_type=label_mode)
-    train_and_save(X, y)
+    main(sys.argv[1:])

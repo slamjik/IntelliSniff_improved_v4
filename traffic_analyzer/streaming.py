@@ -129,7 +129,7 @@ def _emit_flow(key):
     # Predict
     res = {'label':'unknown','score':0.0}
     try:
-        res = predict_from_features(feats, _model) if _model else {'label':'unknown','score':0.0}
+        res = predict_from_features(feats, _model, _model_features) if _model else {'label': 'unknown', 'score': 0.0}
     except Exception:
         log.exception("Model prediction error")
     # Prepare output for storage / UI

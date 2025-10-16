@@ -9,7 +9,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 MODEL_PATH = os.path.join(DATA_DIR, 'model.joblib')
 os.makedirs(DATA_DIR, exist_ok=True)
 
-FEATURE_NAMES = ['duration','packets','bytes','pkts_per_s','bytes_per_s','avg_pkt_size']
+FEATURE_NAMES = ['duration', 'packets', 'bytes', 'pkts_per_s', 'bytes_per_s', 'avg_pkt_size']
 
 def train_demo_model(path=MODEL_PATH):
     """Train a synthetic but realistic model (6 features) and save it."""
@@ -84,17 +84,37 @@ def load_model(path=MODEL_PATH) -> Tuple[object, Optional[list]]:
         features = FEATURE_NAMES
     return model, features
 
-def _features_from_dict(d: Dict):
-    """Convert feature dict to ordered list for model."""
-    return [float(d.get(fname, 0.0)) for fname in FEATURE_NAMES]
+def _features_from_dict(d: Dict, feature_names=None):
+    """Convert feature dict to ordered list for model.
 
-def predict_from_features(feats: Dict, model=None):
-    """Return {'label':..., 'score':...} using provided model or load default."""
+    Parameters
+    ----------
+    d: Dict
+        Сырые признаки потока.
+    feature_names: Optional[list]
+        Порядок признаков, ожидаемый моделью. Если не передан, используется
+        дефолтный набор признаков демо-модели.
+    """
+    names = feature_names or FEATURE_NAMES
+    return [float(d.get(fname, 0.0)) for fname in names]
+
+
+def predict_from_features(feats: Dict, model=None, feature_names=None):
+    """Return ``{"label": ..., "score": ...}`` using provided model or load default."""
+    loaded_features = None
     if model is None:
-        model, _ = load_model()
+        model, loaded_features = load_model()
+    if feature_names is None:
+        if loaded_features:
+            feature_names = loaded_features
+        else:
+            # sklearn >=1.0 сохраняет ``feature_names_in_``
+            feature_names = getattr(model, 'feature_names_in_', None)
+    # fallback to дефолтных признаков демо-модели
+    feature_names = list(feature_names) if feature_names else FEATURE_NAMES
     # accept dict or list/array
     if isinstance(feats, dict):
-        x = np.array([_features_from_dict(feats)])
+        x = np.array([_features_from_dict(feats, feature_names)])
     else:
         x = np.array([feats])
     probs = None
@@ -110,7 +130,7 @@ def predict_from_features(feats: Dict, model=None):
         return {'label': str(lab), 'score': 1.0}
 
 # Backwards-compatible single-packet classifier
-def classify_packet(pkt: Dict, model=None):
+def classify_packet(pkt: Dict, model=None, feature_names=None):
     """ 
     pkt: dict possibly containing duration/packets/bytes (flow), or raw packet fields.
     """
@@ -128,4 +148,4 @@ def classify_packet(pkt: Dict, model=None):
         # try to build minimal features
         length = int(pkt.get('length', pkt.get('bytes', 0) or 0))
         feats = {'duration': 0.0, 'packets': 1, 'bytes': length, 'pkts_per_s': 1.0, 'bytes_per_s': float(length), 'avg_pkt_size': float(length)}
-    return predict_from_features(feats, model)
+    return predict_from_features(feats, model, feature_names)

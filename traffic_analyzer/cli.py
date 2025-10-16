@@ -1,19 +1,47 @@
-import argparse, uvicorn
-from . import api, capture, train_model
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument('cmd', nargs='?', default='serve')
-    args = p.parse_args()
-    if args.cmd == 'serve':
-        uvicorn.run('traffic_analyzer.api:app', host='0.0.0.0', port=8000, reload=False)
-    elif args.cmd == 'start_capture':
-        capture.start_capture()
-    elif args.cmd == 'stop_capture':
-        capture.stop_capture()
-    elif args.cmd == 'train_model':
-        import traffic_analyzer.train_model as t; t.__main__ = True; t.main() if hasattr(t,'main') else None
-    else:
-        print('Unknown command', args.cmd)
+import argparse
 
-if __name__ == '__main__':
+import uvicorn
+
+from . import capture
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="IntelliSniff CLI")
+    parser.add_argument(
+        "cmd",
+        nargs="?",
+        default="serve",
+        choices=["serve", "start_capture", "stop_capture", "train_model"],
+        help="Команда: serve/start_capture/stop_capture/train_model",
+    )
+    parser.add_argument("--host", default="0.0.0.0", help="Хост для API (только для serve)")
+    parser.add_argument("--port", type=int, default=8000, help="Порт для API (только для serve)")
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Для train_model: обучить демо-модель вместо реального датасета",
+    )
+    args = parser.parse_args(argv)
+
+    if args.cmd == "serve":
+        uvicorn.run("traffic_analyzer.api:app", host=args.host, port=args.port, reload=False)
+    elif args.cmd == "start_capture":
+        capture.start_capture()
+    elif args.cmd == "stop_capture":
+        capture.stop_capture()
+    elif args.cmd == "train_model":
+        from . import train_model as tm
+
+        try:
+            if args.demo:
+                tm.train_demo_model()
+            else:
+                tm.train_from_dataset()
+        except FileNotFoundError as exc:
+            parser.error(str(exc))
+    else:
+        parser.error(f"Unknown command: {args.cmd}")
+
+
+if __name__ == "__main__":
     main()
