@@ -1,20 +1,10 @@
-datasets/merged_dataset.csv
-traffic_analyzer/data/model.joblib
-__pycache__/
-*.pyc
-datasets/
-*.zip
-*.parquet
-# Исключаем модели, датасеты и большие бинарники
+# Модели и датасеты
 *.joblib
 *.pkl
 *.h5
 *.pt
 *.onnx
 *.parquet
-*.zip
-*.tar
-*.gz
 *.csv
 datasets/
 data/
