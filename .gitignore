@@ -2,3 +2,6 @@ datasets/merged_dataset.csv
 traffic_analyzer/data/model.joblib
 __pycache__/
 *.pyc
+datasets/
+*.zip
+*.parquet
