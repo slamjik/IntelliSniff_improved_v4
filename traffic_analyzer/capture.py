@@ -1,6 +1,7 @@
 
 import logging, threading, time
-from typing import Optional
+import socket
+from typing import Iterable, Optional
 
 from .streaming import handle_packet, init_streaming, stop_streaming
 from .nfstream_helper import NFSTREAM_AVAILABLE, make_streamer, iterate_flows_from_streamer
@@ -26,14 +27,64 @@ _status = {
     'flow_timeout': 30.0,
 }
 
+_VIRTUAL_KEYWORDS = (
+    "loopback",
+    "virtual",
+    "vmware",
+    "hyper-v",
+    "docker",
+    "br-",
+    "veth",
+    "tap",
+    "tun",
+    "pseudo",
+    "awdl",
+    "nflog",
+    "nfqueue",
+    "ppp",
+)
+
+
+def _filter_interfaces(candidates: Iterable[str]) -> list[str]:
+    seen = set()
+    filtered = []
+    for name in candidates:
+        if not name:
+            continue
+        lowered = name.lower()
+        if lowered in {"lo", "lo0"}:
+            continue
+        if any(keyword in lowered for keyword in _VIRTUAL_KEYWORDS):
+            continue
+        if name not in seen:
+            filtered.append(name)
+            seen.add(name)
+    return filtered
+
+
 def list_ifaces():
-    """Return available interfaces (fallback to empty list when scapy missing)."""
-    if not SCAPY_AVAILABLE:
-        return []
-    try:
-        return get_if_list()
-    except Exception:
-        return []
+    """Return available interfaces (fallback to socket.if_nameindex when scapy missing)."""
+    candidates = []
+    if SCAPY_AVAILABLE:
+        try:
+            candidates.extend(get_if_list())
+        except Exception:
+            pass
+    if not candidates:
+        try:
+            candidates.extend(name for _, name in socket.if_nameindex())
+        except Exception:
+            pass
+    return _filter_interfaces(candidates)
+
+def _call_if_callable(value):
+    if callable(value):
+        try:
+            return value()
+        except Exception:
+            return None
+    return value
+
 
 def _pkt_to_dict(pkt):
     """Normalize scapy packet or dict-like flow into expected dict for handle_packet."""
@@ -44,23 +95,56 @@ def _pkt_to_dict(pkt):
         return pkt
     # scapy Packet: try to extract basic info
     try:
-        src = getattr(pkt, 'src', None) or getattr(pkt, 'src_ip', None)
-        dst = getattr(pkt, 'dst', None) or getattr(pkt, 'dst_ip', None)
-        sport = getattr(pkt, 'sport', None) or getattr(pkt, 'src_port', None)
-        dport = getattr(pkt, 'dport', None) or getattr(pkt, 'dst_port', None)
-        proto = getattr(pkt, 'proto', None) or getattr(pkt, 'proto', None)
-        ts = getattr(pkt, 'time', None)
-        length = getattr(pkt, 'len', None) or getattr(pkt, 'length', None) or getattr(pkt, '__len__', None)
-        iface = getattr(pkt, 'sniffed_on', None) or getattr(pkt, 'iface', None)
+        def g(attr_name, fallback=None):
+            value = getattr(pkt, attr_name, fallback)
+            return _call_if_callable(value)
+
+        src = g('src') or g('src_ip')
+        dst = g('dst') or g('dst_ip')
+        sport = g('sport') or g('src_port')
+        dport = g('dport') or g('dst_port')
+        proto = g('proto') or g('proto')
+        ts = g('time')
+        length = g('len')
+        if length is None:
+            length = g('length')
+        if length is None:
+            length = g('__len__')
+        iface = g('sniffed_on') or g('iface')
+
+        def to_int(val):
+            if val is None:
+                return None
+            if callable(val):
+                return to_int(_call_if_callable(val))
+            if isinstance(val, bool):
+                return int(val)
+            if isinstance(val, (int, float)):
+                return int(val)
+            try:
+                return int(str(val).strip())
+            except Exception:
+                return None
+
+        def to_str(val):
+            if val is None:
+                return None
+            if isinstance(val, (bytes, bytearray)):
+                try:
+                    return val.decode('utf-8', errors='ignore')
+                except Exception:
+                    return str(val)
+            return str(val)
+
         return {
-            'ts': ts,
-            'src': src,
-            'dst': dst,
-            'sport': sport,
-            'dport': dport,
-            'proto': proto,
-            'bytes': length,
-            'iface': iface,
+            'ts': float(ts) if ts is not None else None,
+            'src': to_str(src) if src is not None else None,
+            'dst': to_str(dst) if dst is not None else None,
+            'sport': to_int(sport),
+            'dport': to_int(dport),
+            'proto': to_str(proto) if proto is not None else None,
+            'bytes': to_int(length),
+            'iface': to_str(iface) if iface else None,
             'raw': None
         }
     except Exception:

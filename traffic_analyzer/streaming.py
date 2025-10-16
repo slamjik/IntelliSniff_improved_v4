@@ -1,5 +1,5 @@
 # traffic_analyzer/streaming.py
-import logging, time, threading
+import logging, math, time, threading
 from collections import namedtuple
 from typing import Dict, Optional
 
@@ -97,23 +97,95 @@ def _flush_all():
     for key in keys:
         _emit_flow(key)
 
+def _to_int(value, default=0):
+    if callable(value):
+        try:
+            return _to_int(value(), default)
+        except Exception:
+            return default
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int,)):
+        return int(value)
+    if isinstance(value, float):
+        if math.isnan(value):
+            return default
+        return int(value)
+    if isinstance(value, (bytes, bytearray)):
+        try:
+            value = value.decode('utf-8', errors='ignore')
+        except Exception:
+            return default
+    try:
+        return int(str(value).strip())
+    except Exception:
+        try:
+            return int(float(str(value).strip()))
+        except Exception:
+            return default
+
+
+def _to_float(value, default=0.0):
+    if callable(value):
+        try:
+            return _to_float(value(), default)
+        except Exception:
+            return default
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, (bytes, bytearray)):
+        try:
+            value = value.decode('utf-8', errors='ignore')
+        except Exception:
+            return default
+    try:
+        return float(str(value).strip())
+    except Exception:
+        return default
+
+
+def _to_str(value):
+    if value is None:
+        return None
+    if callable(value):
+        try:
+            return _to_str(value())
+        except Exception:
+            return None
+    if isinstance(value, (bytes, bytearray)):
+        try:
+            return value.decode('utf-8', errors='ignore')
+        except Exception:
+            return str(value)
+    return str(value)
+
+
 def handle_packet(pkt_dict):
     """
     pkt_dict expected to have: ts (float seconds), src, dst, sport, dport, proto, length, iface
     This is the function called by capture layer for each incoming packet.
     """
     try:
-        ts = float(pkt_dict.get('ts', time.time()))
-        key = FlowKey(pkt_dict.get('src'), pkt_dict.get('dst'),
-                      int(pkt_dict.get('sport') or 0),
-                      int(pkt_dict.get('dport') or 0),
-                      str(pkt_dict.get('proto') or '').upper())
-        pkt_len = int(pkt_dict.get('length') or pkt_dict.get('bytes') or 0)
+        ts = _to_float(pkt_dict.get('ts'), default=time.time())
+        key = FlowKey(
+            _to_str(pkt_dict.get('src')),
+            _to_str(pkt_dict.get('dst')),
+            _to_int(pkt_dict.get('sport')),
+            _to_int(pkt_dict.get('dport')),
+            (_to_str(pkt_dict.get('proto')) or '').upper(),
+        )
+        pkt_len = _to_int(pkt_dict.get('length') or pkt_dict.get('bytes'))
 
         with _lock:
             f = _flows.get(key)
             if not f:
-                f = Flow(ts, iface=pkt_dict.get('iface'))
+                f = Flow(ts, iface=_to_str(pkt_dict.get('iface')))
                 _flows[key] = f
             f.update(ts, pkt_len, pkt_dict)
     except Exception:
