@@ -88,6 +88,19 @@ def list_ifaces():
         return filtered
 
 
+def _normalize_iface_for_capture(label: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """Return (display_label, capture_name) for provided interface label."""
+    if label is None:
+        return None, None
+    label = label.strip()
+    if not label:
+        return "", None
+    if label == "All interfaces":
+        return label, label
+    base = label.split(' ')[0]
+    return label, base
+
+
 def _call_if_callable(value):
     if callable(value):
         try:
@@ -221,18 +234,25 @@ def start_capture(iface: Optional[str] = None, bpf: Optional[str] = None,
             iface = next((i for i in all_ifaces if i != "All interfaces"), all_ifaces[0])
             log.info(f"Auto-selected interface: {iface}")
 
+        display_iface, capture_iface = _normalize_iface_for_capture(iface)
+
         init_streaming(flow_timeout=flow_timeout)
         _status.update({
             'running': True,
             'started_at': time.time(),
-            'iface': iface,
+            'iface': display_iface,
             'bpf': bpf,
             'use_nfstream': bool(use_nfstream and NFSTREAM_AVAILABLE),
             'flow_timeout': flow_timeout,
         })
 
+        if not capture_iface and display_iface != "All interfaces":
+            log.error("No valid interface resolved for capture")
+            _status['running'] = False
+            return
+
         # "All interfaces" → множественный захват
-        if iface == "All interfaces":
+        if display_iface == "All interfaces":
             _sniffers = []
             for ifname in list_ifaces():
                 if ifname == "All interfaces":
@@ -252,7 +272,7 @@ def start_capture(iface: Optional[str] = None, bpf: Optional[str] = None,
             log.info("Starting NFStream-based capture")
             _nf_thread = threading.Thread(
                 target=_run_nfstream,
-                kwargs={'interface': iface, 'flow_timeout': flow_timeout},
+                kwargs={'interface': capture_iface, 'flow_timeout': flow_timeout},
                 daemon=True
             )
             _nf_thread.start()
@@ -264,7 +284,7 @@ def start_capture(iface: Optional[str] = None, bpf: Optional[str] = None,
             _status['running'] = False
             return
         try:
-            base_name = iface.split(' ')[0]
+            base_name = capture_iface.split(' ')[0] if capture_iface else None
             _sniffer = AsyncSniffer(iface=base_name, filter=bpf, prn=_on_packet, store=False)
             _sniffer.start()
             log.info(f"AsyncSniffer started on iface={base_name}")
