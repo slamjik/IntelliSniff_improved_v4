@@ -3,7 +3,7 @@ import os
 import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 MODEL_PATH = os.path.join(DATA_DIR, 'model.joblib')
@@ -65,13 +65,24 @@ def train_demo_model(path=MODEL_PATH):
     joblib.dump({'model': clf, 'features': FEATURE_NAMES}, path)
     return path
 
-def load_model(path=MODEL_PATH):
-    """Load model dict (contains model and features)."""
+def load_model(path=MODEL_PATH) -> Tuple[object, Optional[list]]:
+    """
+    Load persisted model metadata.
+
+    Возвращаем кортеж (model, feature_names). Старые модели могли сохранять
+    список признаков под ключом ``columns`` – учитываем это для обратной
+    совместимости.
+    """
     if not os.path.exists(path):
         # train demo model on first use
         train_demo_model(path)
     obj = joblib.load(path)
-    return obj.get('model'), obj.get('features')
+    model = obj.get('model') or obj
+    features = obj.get('features') or obj.get('columns')
+    if features is None:
+        # fall back to defaults used в демо-модели
+        features = FEATURE_NAMES
+    return model, features
 
 def _features_from_dict(d: Dict):
     """Convert feature dict to ordered list for model."""
