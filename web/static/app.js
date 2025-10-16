@@ -1,0 +1,580 @@
+const state = {
+  authToken: null,
+  flows: [],
+  labelCounts: new Map(),
+  destBytes: new Map(),
+  trafficHistory: [],
+  lastStatus: null,
+  websocket: null,
+};
+
+const ui = {};
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  const date = new Date(Number(ts));
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+  });
+}
+
+function formatNumber(value, digits = 0) {
+  if (value === undefined || value === null) return '—';
+  return Number(value).toLocaleString('ru-RU', {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits,
+  });
+}
+
+function setStatusBadge(status) {
+  const badge = ui.statusBadge;
+  badge.classList.remove('status-running', 'status-idle', 'status-warning');
+  switch (status) {
+    case 'running':
+      badge.textContent = 'Захват активен';
+      badge.classList.add('status-running');
+      break;
+    case 'warning':
+      badge.textContent = 'Требует внимания';
+      badge.classList.add('status-warning');
+      break;
+    default:
+      badge.textContent = 'Ожидание';
+      badge.classList.add('status-idle');
+      break;
+  }
+}
+
+function requireAuth() {
+  ui.authOverlay.classList.remove('hidden');
+  ui.authLogin.focus();
+}
+
+function storeAuth(token) {
+  state.authToken = token;
+  sessionStorage.setItem('taAuth', token);
+}
+
+async function apiFetch(path, options = {}) {
+  if (!state.authToken) throw new Error('no auth');
+  const headers = Object.assign({}, options.headers || {}, {
+    Authorization: 'Basic ' + state.authToken,
+  });
+  if (options.body && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
+  const response = await fetch(path, { ...options, headers });
+  if (response.status === 401) {
+    requireAuth();
+    throw new Error('unauthorized');
+  }
+  if (response.headers.get('content-type')?.includes('application/json')) {
+    const json = await response.json();
+    if (!response.ok) throw new Error(json.detail || response.statusText);
+    return json;
+  }
+  if (!response.ok) {
+    throw new Error(response.statusText || 'Request failed');
+  }
+  return response;
+}
+
+function updateStatusDetails(status) {
+  if (!status) return;
+  state.lastStatus = status;
+  const lines = [];
+  lines.push(`Статус: ${status.running ? 'запущено' : 'остановлено'}`);
+  if (status.iface) {
+    lines.push(`Интерфейс: ${status.iface}`);
+  }
+  if (status.bpf) {
+    lines.push(`Фильтр BPF: ${status.bpf}`);
+  }
+  if (status.flow_timeout) {
+    lines.push(`Таймаут потока: ${status.flow_timeout} с`);
+  }
+  if (status.use_nfstream) {
+    lines.push('NFStream активен');
+  } else if (status.nfstream_available === false) {
+    lines.push('NFStream недоступен (пакет не установлен)');
+  }
+  if (status.started_at) {
+    lines.push(`Старт: ${formatDate(status.started_at * 1000)}`);
+  }
+  ui.statusDetails.textContent = lines.join(' · ');
+  document.getElementById('nfStatus').textContent = status.nfstream_available ? 'доступен' : 'недоступен';
+  setStatusBadge(status.running ? 'running' : 'idle');
+}
+
+function updateLabelFilterOptions() {
+  const select = ui.labelFilter;
+  const current = new Set(['all']);
+  for (const option of select.options) current.add(option.value);
+  for (const label of state.labelCounts.keys()) {
+    if (!current.has(label)) {
+      const opt = document.createElement('option');
+      opt.value = label;
+      opt.textContent = label;
+      select.appendChild(opt);
+    }
+  }
+}
+
+function updateCards() {
+  ui.totalFlows.textContent = state.flows.length.toString();
+  const suspicious = state.flows.filter((f) => !isBenign(f.label)).length;
+  ui.suspiciousFlows.textContent = suspicious.toString();
+  const bandwidthValues = state.flows
+    .map((f) => Number(f.bytes_per_sec || (f.summary && f.summary['байт_в_сек'])) || 0)
+    .filter((v) => v > 0);
+  const avgBandwidth = bandwidthValues.length
+    ? bandwidthValues.reduce((a, b) => a + b, 0) / bandwidthValues.length
+    : 0;
+  ui.bandwidth.textContent = `${formatNumber(avgBandwidth / 1024, 1)} КБ/с`;
+  const last = state.flows[0];
+  if (last) {
+    ui.lastFlowLabel.textContent = `${last.label || '—'} (${formatNumber(last.score * 100, 0)}%)`;
+    const hints = [];
+    if (last.summary) {
+      const keys = ['tls_sni', 'http_host', 'dns_query', 'app'];
+      keys.forEach((k) => {
+        const value = last.summary[k];
+        if (value) hints.push(`${k}: ${value}`);
+      });
+    }
+    if (!hints.length) {
+      hints.push(`Пакеты: ${last.packets}, байты: ${last.bytes}`);
+    }
+    ui.lastFlowSummary.textContent = hints.join(' · ');
+  }
+}
+
+function isBenign(label) {
+  if (!label) return false;
+  const normalized = String(label).toLowerCase();
+  return ['benign', 'normal', 'web', 'allow'].includes(normalized);
+}
+
+let labelsChart;
+let trafficChart;
+let destChart;
+
+function initCharts() {
+  const labelCtx = document.getElementById('labelsChart').getContext('2d');
+  labelsChart = new Chart(labelCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Потоки',
+          data: [],
+          backgroundColor: '#38bdf8',
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: { ticks: { color: '#94a3b8' } },
+        y: { ticks: { color: '#94a3b8' }, beginAtZero: true },
+      },
+    },
+  });
+
+  const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+  trafficChart = new Chart(trafficCtx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Пакеты/с',
+          data: [],
+          borderColor: '#0ea5e9',
+          backgroundColor: 'rgba(56,189,248,0.15)',
+          tension: 0.4,
+          fill: true,
+        },
+      ],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#94a3b8' } },
+        y: { ticks: { color: '#94a3b8' }, beginAtZero: true },
+      },
+    },
+  });
+
+  const destCtx = document.getElementById('destChart').getContext('2d');
+  destChart = new Chart(destCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Байт',
+          data: [],
+          backgroundColor: 'rgba(148,163,184,0.4)',
+        },
+      ],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      indexAxis: 'y',
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, beginAtZero: true },
+        y: { ticks: { color: '#94a3b8' } },
+      },
+    },
+  });
+}
+
+function updateCharts() {
+  if (!labelsChart) return;
+  const labels = Array.from(state.labelCounts.keys());
+  const counts = labels.map((label) => state.labelCounts.get(label));
+  labelsChart.data.labels = labels;
+  labelsChart.data.datasets[0].data = counts;
+  labelsChart.update('none');
+
+  const trafficLabels = state.trafficHistory.map((item) => item.label);
+  const trafficValues = state.trafficHistory.map((item) => item.value);
+  trafficChart.data.labels = trafficLabels;
+  trafficChart.data.datasets[0].data = trafficValues;
+  trafficChart.update('none');
+
+  const destinations = Array.from(state.destBytes.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 7);
+  destChart.data.labels = destinations.map(([dst]) => dst);
+  destChart.data.datasets[0].data = destinations.map(([, bytes]) => Math.round(bytes));
+  destChart.update('none');
+}
+
+function renderTable() {
+  const tbody = ui.tableBody;
+  const search = ui.tableSearch.value.trim().toLowerCase();
+  const selectedLabel = ui.labelFilter.value;
+  const filtered = state.flows.filter((flow) => {
+    if (selectedLabel !== 'all' && flow.label !== selectedLabel) return false;
+    if (!search) return true;
+    const candidate = [
+      flow.src,
+      flow.dst,
+      flow.proto,
+      flow.label,
+      flow.sport,
+      flow.dport,
+      JSON.stringify(flow.summary || {}),
+    ]
+      .join(' ')
+      .toLowerCase();
+    return candidate.includes(search);
+  });
+
+  ui.tableCounter.textContent = `${filtered.length} записей`;
+  tbody.innerHTML = filtered
+    .map((flow) => {
+      const score = flow.score !== undefined ? `${Math.round(flow.score * 100)}%` : '—';
+      const labelClass = isBenign(flow.label) ? 'badge badge-ok' : 'badge badge-alert';
+      const summaryChips = [];
+      if (flow.summary && typeof flow.summary === 'object') {
+        const interesting = ['tls_sni', 'http_host', 'dns_query', 'app'];
+        for (const key of interesting) {
+          if (flow.summary[key]) {
+            summaryChips.push(`<span class="summary-chip">${key}: ${flow.summary[key]}</span>`);
+          }
+        }
+        if (!summaryChips.length) {
+          summaryChips.push(
+            `<span class="summary-chip">${formatNumber(
+              flow.summary['байт_в_сек'] || 0,
+              1
+            )} Б/с</span>`
+          );
+        }
+      }
+      return `
+        <tr>
+          <td>${formatDate(flow.ts)}</td>
+          <td>${flow.src || ''}</td>
+          <td>${flow.dst || ''}</td>
+          <td>${flow.sport || ''} → ${flow.dport || ''}</td>
+          <td>${flow.proto || ''}</td>
+          <td><span class="${labelClass}">${flow.label || '—'}</span></td>
+          <td>${score}</td>
+          <td>${formatNumber(flow.packets)}</td>
+          <td>${formatNumber(flow.bytes)}</td>
+          <td>${summaryChips.join(' ')}</td>
+        </tr>`;
+    })
+    .join('');
+}
+
+function updateLabelCounts(flow) {
+  const label = flow.label || 'unknown';
+  const current = state.labelCounts.get(label) || 0;
+  state.labelCounts.set(label, current + 1);
+}
+
+function updateDestinations(flow) {
+  const key = flow.dst || 'неизвестно';
+  const current = state.destBytes.get(key) || 0;
+  state.destBytes.set(key, current + (Number(flow.bytes) || 0));
+}
+
+function updateTraffic(flow) {
+  const label = new Date(flow.ts).toLocaleTimeString('ru-RU', { minute: '2-digit', second: '2-digit' });
+  state.trafficHistory.push({ label, value: Number(flow.packets) || 0 });
+  if (state.trafficHistory.length > 40) state.trafficHistory.shift();
+}
+
+function addFlow(flow) {
+  if (!flow) return;
+  state.flows.unshift(flow);
+  if (state.flows.length > 300) state.flows.pop();
+  updateLabelCounts(flow);
+  updateDestinations(flow);
+  updateTraffic(flow);
+  updateLabelFilterOptions();
+  updateCards();
+  updateCharts();
+  renderTable();
+}
+
+async function loadInitialData() {
+  try {
+    const status = await apiFetch('/status');
+    updateStatusDetails(status);
+    const ifaceResp = await apiFetch('/interfaces');
+    populateInterfaces(ifaceResp.interfaces || []);
+    const flowsResp = await apiFetch('/flows/recent?limit=200');
+    state.flows = [];
+    state.labelCounts = new Map();
+    state.destBytes = new Map();
+    state.trafficHistory = [];
+    (flowsResp.items || []).reverse().forEach(addFlow);
+  } catch (err) {
+    console.error(err);
+    ui.statusDetails.textContent = 'Ошибка загрузки данных: ' + err.message;
+    setStatusBadge('warning');
+  }
+}
+
+function populateInterfaces(interfaces) {
+  const select = ui.iface;
+  const current = select.value;
+  select.innerHTML = '<option value="">Авто</option>';
+  interfaces.forEach((iface) => {
+    const option = document.createElement('option');
+    option.value = iface;
+    option.textContent = iface;
+    select.appendChild(option);
+  });
+  if (interfaces.includes(current)) {
+    select.value = current;
+  }
+}
+
+function setupWebSocket() {
+  if (state.websocket) {
+    state.websocket.close();
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const ws = new WebSocket(`${protocol}${window.location.host}/ws/live`);
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      if (msg.topic === 'flow') {
+        addFlow(msg.data);
+      }
+    } catch (err) {
+      console.error('WS message error', err);
+    }
+  };
+  ws.onopen = () => console.log('WebSocket открыт');
+  ws.onclose = () => {
+    console.warn('WebSocket закрыт, повтор через 2с');
+    setTimeout(setupWebSocket, 2000);
+  };
+  ws.onerror = (err) => console.error('WebSocket error', err);
+  state.websocket = ws;
+}
+
+async function handleStart() {
+  try {
+    setStatusBadge('warning');
+    ui.statusDetails.textContent = 'Запуск захвата...';
+    const payload = {
+      iface: ui.iface.value || null,
+      bpf: ui.bpf.value || null,
+      flow_timeout: Number(ui.flowTimeout.value) || 30,
+      use_nfstream: ui.useNfstream.checked,
+    };
+    const res = await apiFetch('/start_capture', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    updateStatusDetails(res.details);
+  } catch (err) {
+    console.error(err);
+    ui.statusDetails.textContent = 'Не удалось запустить захват: ' + err.message;
+    setStatusBadge('warning');
+  }
+}
+
+async function handleStop() {
+  try {
+    const res = await apiFetch('/stop_capture', { method: 'POST' });
+    updateStatusDetails(res.details);
+  } catch (err) {
+    console.error(err);
+    ui.statusDetails.textContent = 'Ошибка остановки: ' + err.message;
+    setStatusBadge('warning');
+  }
+}
+
+async function handleTrain() {
+  ui.trainBtn.disabled = true;
+  ui.trainBtn.textContent = 'Обучение...';
+  try {
+    await apiFetch('/train_model', {
+      method: 'POST',
+      body: JSON.stringify({ demo: true }),
+    });
+    ui.statusDetails.textContent = 'Обучение модели запущено (в фоне).';
+  } catch (err) {
+    ui.statusDetails.textContent = 'Не удалось запустить обучение: ' + err.message;
+  } finally {
+    setTimeout(() => {
+      ui.trainBtn.disabled = false;
+      ui.trainBtn.textContent = 'Переобучить модель';
+    }, 4000);
+  }
+}
+
+async function downloadReport(path, filename) {
+  try {
+    const response = await apiFetch(path, { method: 'GET' });
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    ui.statusDetails.textContent = 'Не удалось скачать отчёт: ' + err.message;
+  }
+}
+
+function bindEvents() {
+  ui.startBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleStart();
+  });
+  ui.stopBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleStop();
+  });
+  ui.trainBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleTrain();
+  });
+  ui.csvBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    downloadReport('/report/csv', 'traffic_report.csv');
+  });
+  ui.pdfBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    downloadReport('/report/pdf', 'traffic_report.pdf');
+  });
+  ui.labelFilter.addEventListener('change', renderTable);
+  ui.tableSearch.addEventListener('input', () => {
+    renderTable();
+  });
+}
+
+function collectUi() {
+  ui.authOverlay = document.getElementById('authOverlay');
+  ui.authForm = document.getElementById('authForm');
+  ui.authLogin = document.getElementById('authLogin');
+  ui.authPassword = document.getElementById('authPassword');
+  ui.statusBadge = document.getElementById('statusBadge');
+  ui.statusDetails = document.getElementById('statusDetails');
+  ui.totalFlows = document.getElementById('totalFlows');
+  ui.suspiciousFlows = document.getElementById('suspiciousFlows');
+  ui.bandwidth = document.getElementById('bandwidth');
+  ui.lastFlowLabel = document.getElementById('lastFlowLabel');
+  ui.lastFlowSummary = document.getElementById('lastFlowSummary');
+  ui.iface = document.getElementById('iface');
+  ui.bpf = document.getElementById('bpf');
+  ui.flowTimeout = document.getElementById('flowTimeout');
+  ui.useNfstream = document.getElementById('use_nfstream');
+  ui.startBtn = document.getElementById('startBtn');
+  ui.stopBtn = document.getElementById('stopBtn');
+  ui.trainBtn = document.getElementById('trainBtn');
+  ui.csvBtn = document.getElementById('csvBtn');
+  ui.pdfBtn = document.getElementById('pdfBtn');
+  ui.labelFilter = document.getElementById('labelFilter');
+  ui.tableBody = document.querySelector('#flowsTable tbody');
+  ui.tableSearch = document.getElementById('tableSearch');
+  ui.tableCounter = document.getElementById('tableCounter');
+}
+
+async function verifyAuth(login, password) {
+  const token = btoa(`${login}:${password}`);
+  try {
+    state.authToken = token;
+    const res = await apiFetch('/status');
+    ui.authOverlay.classList.add('hidden');
+    storeAuth(token);
+    updateStatusDetails(res);
+    await loadInitialData();
+    setupWebSocket();
+  } catch (err) {
+    state.authToken = null;
+    ui.authPassword.value = '';
+    alert('Неверный логин или пароль.');
+  }
+}
+
+function initAuth() {
+  const saved = sessionStorage.getItem('taAuth');
+  if (saved) {
+    state.authToken = saved;
+    ui.authOverlay.classList.add('hidden');
+    loadInitialData().then(setupWebSocket).catch(console.error);
+  } else {
+    requireAuth();
+  }
+
+  ui.authForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    verifyAuth(ui.authLogin.value, ui.authPassword.value);
+  });
+}
+
+function init() {
+  collectUi();
+  initCharts();
+  bindEvents();
+  initAuth();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

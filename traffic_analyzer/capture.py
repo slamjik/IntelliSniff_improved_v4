@@ -1,5 +1,7 @@
 
 import logging, threading, time
+from typing import Optional
+
 from .streaming import handle_packet, init_streaming, stop_streaming
 from .nfstream_helper import NFSTREAM_AVAILABLE, make_streamer, iterate_flows_from_streamer
 
@@ -15,6 +17,14 @@ _sniffer = None
 _sniffer_lock = threading.Lock()
 _nf_thread = None
 _nf_stop = False
+_status = {
+    'running': False,
+    'started_at': None,
+    'iface': None,
+    'bpf': None,
+    'use_nfstream': False,
+    'flow_timeout': 30.0,
+}
 
 def list_ifaces():
     """Return available interfaces (fallback to empty list when scapy missing)."""
@@ -41,7 +51,18 @@ def _pkt_to_dict(pkt):
         proto = getattr(pkt, 'proto', None) or getattr(pkt, 'proto', None)
         ts = getattr(pkt, 'time', None)
         length = getattr(pkt, 'len', None) or getattr(pkt, 'length', None) or getattr(pkt, '__len__', None)
-        return {'ts': ts, 'src': src, 'dst': dst, 'sport': sport, 'dport': dport, 'proto': proto, 'bytes': length, 'raw': None}
+        iface = getattr(pkt, 'sniffed_on', None) or getattr(pkt, 'iface', None)
+        return {
+            'ts': ts,
+            'src': src,
+            'dst': dst,
+            'sport': sport,
+            'dport': dport,
+            'proto': proto,
+            'bytes': length,
+            'iface': iface,
+            'raw': None
+        }
     except Exception:
         return None
 
@@ -54,7 +75,7 @@ def _on_packet(pkt):
     except Exception:
         log.exception("handle_packet failed")
 
-def _run_nfstream(interface=None, pcap=None):
+def _run_nfstream(interface=None, pcap=None, flow_timeout: float = 30.0):
     """Run NFStreamer loop and forward flows to handle_packet."""
     global _nf_stop
     _nf_stop = False
@@ -76,6 +97,11 @@ def _run_nfstream(interface=None, pcap=None):
                 'proto': getattr(flow, 'protocol', None),
                 'bytes': getattr(flow, 'bytes', None),
                 'packets': getattr(flow, 'packets', None),
+                'iface': interface,
+                'tls_sni': getattr(flow, 'tls_sni', None),
+                'http_host': getattr(flow, 'http_host', None),
+                'dns_query': getattr(flow, 'dns_qry_name', None),
+                'application_name': getattr(flow, 'application_name', None),
             }
             handle_packet(pkt)
         except Exception:
@@ -85,22 +111,36 @@ def _run_nfstream(interface=None, pcap=None):
     except Exception:
         pass
 
-def start_capture(iface=None, bpf=None, flow_timeout: float = 30.0, use_nfstream: bool = False):
+def start_capture(iface: Optional[str] = None, bpf: Optional[str] = None,
+                  flow_timeout: float = 30.0, use_nfstream: bool = False):
     """Start packet capture. If use_nfstream True and NFStream is available, use NFStream; otherwise use scapy AsyncSniffer."""
     global _sniffer, _nf_thread, _nf_stop
     with _sniffer_lock:
         if _sniffer is not None or (_nf_thread is not None and _nf_thread.is_alive()):
             log.warning("Capture already running")
             return
-        init_streaming()
+        init_streaming(flow_timeout=flow_timeout)
+        _status.update({
+            'running': True,
+            'started_at': time.time(),
+            'iface': iface,
+            'bpf': bpf,
+            'use_nfstream': bool(use_nfstream and NFSTREAM_AVAILABLE),
+            'flow_timeout': flow_timeout,
+        })
         if use_nfstream and NFSTREAM_AVAILABLE:
             log.info("Starting NFStream-based capture")
-            _nf_thread = threading.Thread(target=_run_nfstream, kwargs={'interface': iface}, daemon=True)
+            _nf_thread = threading.Thread(
+                target=_run_nfstream,
+                kwargs={'interface': iface, 'flow_timeout': flow_timeout},
+                daemon=True
+            )
             _nf_thread.start()
             return
         # fallback to scapy
         if not SCAPY_AVAILABLE:
             log.error("Scapy is not available; cannot start AsyncSniffer")
+            _status['running'] = False
             return
         try:
             _sniffer = AsyncSniffer(iface=iface, filter=bpf, prn=_on_packet, store=False)
@@ -109,6 +149,7 @@ def start_capture(iface=None, bpf=None, flow_timeout: float = 30.0, use_nfstream
         except Exception:
             log.exception("Failed to start AsyncSniffer")
             _sniffer = None
+            _status['running'] = False
 
 def stop_capture():
     """Stop any running capture (scapy or nfstream)"""
@@ -129,4 +170,24 @@ def stop_capture():
                 pass
             _nf_thread = None
         stop_streaming()
+        _status.update({
+            'running': False,
+            'stopped_at': time.time(),
+        })
         log.info("Capture stopped")
+
+def is_running() -> bool:
+    with _sniffer_lock:
+        if _sniffer and getattr(_sniffer, 'running', False):
+            return True
+        if _nf_thread and _nf_thread.is_alive():
+            return True
+    return False
+
+def get_status():
+    """Return current capture status snapshot."""
+    status = _status.copy()
+    status['running'] = is_running()
+    status['nfstream_available'] = NFSTREAM_AVAILABLE
+    status['interfaces'] = list_ifaces()
+    return status
