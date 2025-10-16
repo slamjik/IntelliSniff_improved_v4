@@ -1,150 +1,214 @@
-"""
-Dataset preprocessor for CICIDS2017, CICIDS2018 and ISCX VPN datasets.
-Automatically detects .csv and .parquet files inside ./datasets/.
-Run: python -m traffic_analyzer.dataset_preprocessor
-Output: datasets/merged_dataset.csv
-"""
-import os, glob, pandas as pd, numpy as np, logging, pathlib
 
-log = logging.getLogger("ta.dataset_preprocessor")
+import os
+import re
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+from pathlib import Path
+from scipy.io import arff
+from sklearn.utils import resample
 
-BASE = os.path.join(os.path.dirname(__file__), '..', 'datasets')
-OUT = os.path.join(BASE, 'merged_dataset.csv')
+# === ПУТИ ===================================================================
+BASE = r"C:\Users\Olega\PycharmProjects\IntelliSniff_improved_v4\datasets"
+OUT_PARQUET = os.path.join(BASE, "merged_detailed.parquet")
+OUT_REPORT = os.path.join(BASE, "merge_report.csv")
 os.makedirs(BASE, exist_ok=True)
 
-def infer_and_map(df):
-    cols = {c.lower(): c for c in df.columns}
-    duration = None
-    for key in ['flow duration', 'duration(ms)', 'duration']:
-        if key in cols:
-            duration = df[cols[key]].astype(float) / 1000.0 if 'ms' in key else df[cols[key]].astype(float)
-            break
-    if duration is None:
-        duration = pd.Series(np.maximum(1e-6, np.zeros(len(df))), index=df.index)
+# === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ================================================
+def make_unique_columns(columns):
+    """Делает имена колонок уникальными"""
+    seen = {}
+    result = []
+    for c in columns:
+        if c not in seen:
+            seen[c] = 1
+            result.append(c)
+        else:
+            seen[c] += 1
+            result.append(f"{c}_{seen[c]}")
+    return result
 
-    packets = None
-    for k in [('total fwd packets','total backward packets'), ('total packets',''), ('fwd pkt len mean','')]:
-        if k[0] in cols:
-            if k[1] and k[1] in cols:
-                packets = df[cols[k[0]]].fillna(0).astype(float) + df[cols[k[1]]].fillna(0).astype(float)
-            else:
-                packets = df[cols[k[0]]].fillna(0).astype(float)
-            break
-    if packets is None:
-        packets = pd.Series(np.ones(len(df)), index=df.index)
 
-    bytes_ = None
-    for key in ['total fwd bytes','total backw bytes','total length of fwd packets','total length of bwd packets','total length']:
-        if key in cols:
-            bytes_ = df[cols[key]].fillna(0).astype(float)
-            break
-    if bytes_ is None:
-        b = 0; found = False
-        for k in ['total fwd bytes','total backw bytes']:
-            if k in cols:
-                b += df[cols[k]].fillna(0).astype(float)
-                found = True
-        if found: bytes_ = b
-    if bytes_ is None:
-        bytes_ = packets * 100.0
+def optimize_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Автоматическая оптимизация типов"""
+    for col in df.select_dtypes(include=["float64"]).columns:
+        df[col] = df[col].astype("float32")
+    for col in df.select_dtypes(include=["int64"]).columns:
+        df[col] = df[col].astype("int32")
+    return df
 
-    sport = None; dport = None
-    for key in ['source port','src port','sport','srcport']:
-        if key in cols:
-            sport = df[cols[key]].fillna(0).astype(int)
-            break
-    for key in ['destination port','dst port','dport','dstport']:
-        if key in cols:
-            dport = df[cols[key]].fillna(0).astype(int)
-            break
-    if sport is None: sport = pd.Series(np.zeros(len(df)), index=df.index).astype(int)
-    if dport is None: dport = pd.Series(np.zeros(len(df)), index=df.index).astype(int)
 
-    proto = None
-    for key in ['protocol','proto']:
-        if key in cols:
-            proto = df[cols[key]].fillna(0)
-            proto = proto.apply(lambda x: 6 if str(x).lower().startswith('tcp') else (17 if str(x).lower().startswith('udp') else (int(x) if str(x).isdigit() else 0)))
-            break
-    if proto is None:
-        proto = pd.Series(np.zeros(len(df)), index=df.index).astype(int)
+def safe_numeric(df: pd.DataFrame) -> pd.DataFrame:
+    """Пытается преобразовать строки в числа, игнорируя ошибки"""
+    for col in df.columns:
+        if df[col].dtype == object:
+            df[col] = pd.to_numeric(df[col], errors="ignore")
+    return df
 
-    label = None
-    for key in ['label','classification','attack','traffic type']:
-        if key in cols:
-            label = df[cols[key]].astype(str).str.lower()
-            break
-    if label is None:
-        label = pd.Series(['benign'] * len(df), index=df.index)
 
-    label_bin = label.apply(lambda x: 0 if any(tok in str(x) for tok in ['benign','normal','background','legitimate','good','non']) else 1)
+# === НОРМАЛИЗАЦИЯ КОЛОНОК ====================================================
+ALIASES = {
+    r"^flow duration": "flow duration",
+    r"^destination port": "destination port",
+    r"^src port|source port": "source port",
+    r"^total fwd packets": "total fwd packets",
+    r"^total backward packets": "total backward packets",
+    r"^total fwd bytes|total length of fwd packets": "total fwd bytes",
+    r"^total backward bytes|total length of bwd packets": "total backward bytes",
+    r"^protocol": "protocol",
+    r"^label|^class|^attack": "label",
+}
 
-    return pd.DataFrame({
-        'duration': duration,
-        'packets': packets,
-        'bytes': bytes_,
-        'sport': sport,
-        'dport': dport,
-        'proto': proto,
-        'label': label_bin
-    })
 
-def process_all(dataset_dir=BASE, out_path=OUT, max_rows_per_file=None):
-    # remove old merged dataset to avoid duplicates
-    if os.path.exists(out_path):
-        os.remove(out_path)
-        print(f"🧹 Удалён старый файл {out_path}")
+def clean_cols(df: pd.DataFrame) -> pd.DataFrame:
+    """Очистка имён колонок"""
+    new_cols = []
+    for c in df.columns:
+        cc = str(c).lower().strip()
+        cc = cc.replace("\ufeff", "")
+        cc = re.sub(r"[\s_]+", " ", cc)
+        cc = re.sub(r"[^a-z0-9 /]", "", cc)
+        for pat, repl in ALIASES.items():
+            if re.search(pat, cc):
+                cc = repl
+        new_cols.append(cc)
+    df.columns = make_unique_columns(new_cols)
+    return df
 
-    files = [str(p) for p in pathlib.Path(dataset_dir).rglob('*') if p.suffix in ['.csv', '.parquet']]
+
+def find_label(df: pd.DataFrame):
+    """Поиск колонки с метками"""
+    for col in df.columns:
+        if re.search(r"label|class|attack|category|type", col):
+            return df[col]
+    return pd.Series(["benign"] * len(df))
+
+
+def unify_schema(df: pd.DataFrame) -> pd.DataFrame:
+    """Добавляет недостающие ключевые колонки"""
+    base_cols = [
+        "flow duration", "destination port", "source port",
+        "total fwd packets", "total backward packets",
+        "total fwd bytes", "total backward bytes", "protocol"
+    ]
+    for col in base_cols:
+        if col not in df.columns:
+            df[col] = 0
+    return df
+
+
+def map_label_columns(label_series):
+    """Создаёт бинарную и мультиклассовую метку"""
+    label_series = label_series.astype(str).str.lower().str.strip()
+    y_bin = label_series.apply(
+        lambda x: 0 if any(t in x for t in ["benign", "normal", "legit", "background", "nonvpn"]) else 1
+    )
+    y_multi = label_series.apply(
+        lambda x: (
+            "benign" if any(t in x for t in ["benign", "normal", "legit", "background", "nonvpn"]) else
+            ("dos" if "dos" in x else
+             "ddos" if "ddos" in x else
+             "bruteforce" if "brute" in x else
+             "portscan" if "scan" in x else
+             "botnet" if "bot" in x else
+             "infiltration" if "infil" in x else
+             "webattack" if "web" in x else
+             "attack")
+        )
+    )
+    return y_bin, y_multi
+
+
+# === ЧТЕНИЕ ==================================================================
+def read_any(path):
+    """Загружает CSV, Parquet или ARFF"""
+    if path.endswith(".csv"):
+        return pd.read_csv(path, low_memory=False)
+    elif path.endswith(".parquet"):
+        return pd.read_parquet(path)
+    elif path.endswith(".arff"):
+        data, meta = arff.loadarff(path)
+        df = pd.DataFrame(data)
+        df = df.map(lambda x: x.decode("utf-8") if isinstance(x, bytes) else x)
+        df = df.replace("", np.nan).dropna(how="all")
+        return df
+    else:
+        raise ValueError(f"❌ Unsupported format: {path}")
+
+
+# === ГЛАВНАЯ ФУНКЦИЯ =========================================================
+def process():
+    if os.path.exists(OUT_PARQUET):
+        os.remove(OUT_PARQUET)
+        print(f"🧹 Old file removed: {OUT_PARQUET}")
+
+    files = [str(p) for p in Path(BASE).rglob("*") if p.suffix.lower() in (".csv", ".parquet", ".arff")]
     if not files:
-        print("❌ Не найдено файлов .csv или .parquet в", dataset_dir)
-        return None
+        print("❌ No datasets found in", BASE)
+        return
 
-    print(f"🔍 Найдено {len(files)} файлов для объединения\n")
+    print(f"🔍 Found {len(files)} dataset files\n")
 
-    parts = []
-    stats = []
-    for f in files:
+    parts, stats = [], []
+    for f in tqdm(files, desc="Reading & normalizing"):
         try:
-            if f.endswith('.parquet'):
-                df = pd.read_parquet(f)
-            else:
-                df = pd.read_csv(f, low_memory=False)
-            mapped = infer_and_map(df)
-            if max_rows_per_file and len(mapped) > max_rows_per_file:
-                mapped = mapped.sample(max_rows_per_file, random_state=42)
-            parts.append(mapped)
-            stats.append((os.path.basename(f), len(mapped)))
-            print(f"✅ {os.path.basename(f)}: {len(mapped)} строк")
+            df = read_any(f)
+            df = clean_cols(df)
+            df = safe_numeric(df)
+
+            label_raw = find_label(df)
+            df["__label__"] = label_raw
+            df = unify_schema(df)
+            y_bin, y_multi = map_label_columns(df["__label__"])
+            df = df.drop(columns=["__label__"], errors="ignore")
+
+            df = pd.concat([df, pd.DataFrame({
+                "label_binary": y_bin,
+                "label_multi": y_multi
+            }, index=df.index)], axis=1)
+
+            df = df.reset_index(drop=True)
+            df.columns = make_unique_columns(df.columns)
+            df = df.replace([np.inf, -np.inf], np.nan).dropna(how="all")
+
+            df = optimize_dtypes(df)
+
+            parts.append(df)
+            stats.append((os.path.basename(f), len(df)))
         except Exception as e:
-            print(f"⚠️ Ошибка при чтении {os.path.basename(f)}: {e}")
+            print(f"⚠️ {os.path.basename(f)}: {e}")
 
     if not parts:
-        print("❌ Не удалось обработать ни один файл")
-        return None
+        print("❌ No datasets processed")
+        return
 
+    print("🔄 Concatenating all datasets...")
     merged = pd.concat(parts, ignore_index=True)
-    merged = merged.replace([np.inf, -np.inf], np.nan).dropna()
+    merged = merged.replace([np.inf, -np.inf], np.nan).dropna(how="all")
 
-    counts = merged['label'].value_counts()
-    if len(counts) == 2:
-        maj, minc = counts.idxmax(), counts.idxmin()
-        ratio = counts[maj] / max(1, counts[minc])
-        if ratio > 10:
-            target = int(counts[minc] * 3)
-            maj_df = merged[merged['label'] == maj].sample(target, random_state=42)
-            min_df = merged[merged['label'] == minc]
-            merged = pd.concat([maj_df, min_df], ignore_index=True).sample(frac=1.0, random_state=42)
+    # === Балансировка =======================================================
+    if "label_binary" in merged.columns:
+        counts = merged["label_binary"].value_counts()
+        if len(counts) == 2 and counts.min() > 0:
+            maj, minc = counts.idxmax(), counts.idxmin()
+            if counts[maj] / counts[minc] > 10:
+                print("⚖️ Balancing classes (oversampling)...")
+                maj_df = merged[merged["label_binary"] == maj]
+                min_df = merged[merged["label_binary"] == minc]
+                min_up = resample(min_df, replace=True, n_samples=int(len(maj_df) * 0.5), random_state=42)
+                merged = pd.concat([maj_df, min_up], ignore_index=True).sample(frac=1.0, random_state=42)
 
-    merged.to_csv(out_path, index=False)
-    print(f"\n💾 Сохранён объединённый датасет: {out_path}")
-    print(f"📊 Всего строк: {len(merged)}\n")
+    merged = optimize_dtypes(merged)
+    merged.to_parquet(OUT_PARQUET, index=False)
+    print(f"\n💾 Saved: {OUT_PARQUET}")
+    print(f"📊 Total rows: {len(merged):,}")
 
-    print("📋 Обзор по файлам:")
-    for name, count in stats:
-        print(f"  {name:<45} {count:>10}")
+    # === Отчёт ==============================================================
+    report = pd.DataFrame(stats, columns=["dataset", "rows"])
+    report.to_csv(OUT_REPORT, index=False)
+    print(f"🧾 Merge report saved to: {OUT_REPORT}")
 
-    return out_path
 
+# === MAIN ===================================================================
 if __name__ == "__main__":
-    process_all()
+    process()

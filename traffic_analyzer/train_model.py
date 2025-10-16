@@ -1,102 +1,122 @@
-
-import os, sys, time, joblib, logging
-import pandas as pd, numpy as np
+import os
+import sys
+import time
+import joblib
+import logging
+import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, accuracy_score, precision_score, recall_score
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-MODEL_PATH = os.path.join(DATA_DIR, "model.joblib")
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.preprocessing import LabelEncoder
+
+# === ПУТИ ===============================================================
+BASE_DIR = os.path.dirname(__file__)
+DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
-log = logging.getLogger("ta.train_model")
 
-def load_csvs(files):
-    dfs = []
-    for f in files:
-        dfs.append(pd.read_csv(f))
-    if not dfs:
-        return None
-    return pd.concat(dfs, ignore_index=True)
+MODEL_PATH = os.path.join(DATA_DIR, "model.joblib")
+DATASET_PATH = os.path.join(BASE_DIR, "..", "datasets", "merged_detailed.parquet")
 
-def train_and_save(csv_files=None, demo=False, out_path=MODEL_PATH):
-    if demo or not csv_files:
-        from .dataset_preprocessor import process_all, BASE
-        merged = process_all(dataset_dir=BASE)
-        if merged is None:
-            # fallback to synthetic demo
-            print("[INFO] No datasets found, using synthetic demo dataset")
-            X, y = generate_demo_dataset(2000)
-        else:
-            df = pd.read_csv(merged)
-            if 'label' not in df.columns:
-                raise ValueError("Merged dataset missing 'label' column")
-            y = df['label']
-            X = df.drop(columns=['label'])
+log = logging.getLogger("IntelliSniff.train_model")
+
+
+# === ЗАГРУЗКА ============================================================
+def load_dataset(path=DATASET_PATH, label_type="binary"):
+    """Загружает parquet и подготавливает X, y"""
+    print(f"📂 Loading dataset from {path}")
+    df = pd.read_parquet(path)
+
+    # Выбор метки
+    if label_type == "multi" and "label_multi" in df.columns:
+        y = df["label_multi"]
+        y = LabelEncoder().fit_transform(y)
+    elif "label_binary" in df.columns:
+        y = df["label_binary"]
+    elif "label" in df.columns:
+        y = df["label"]
     else:
-        df = load_csvs(csv_files)
-        if 'label' not in df.columns:
-            raise ValueError("CSV files must contain 'label' column for supervised training.")
-        y = df['label']
-        X = df.drop(columns=['label'])
+        raise ValueError("❌ Dataset missing label column")
 
-    # basic numeric fill and conversion
-    X = X.fillna(0)
-    X = X.select_dtypes(include=[float, int, 'int64', 'float64']).astype(float)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y if len(set(y))>1 else None)
-    clf = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)
+    # Выбор признаков
+    drop_cols = [c for c in ["label", "label_binary", "label_multi"] if c in df.columns]
+    X = df.drop(columns=drop_cols, errors="ignore")
+
+    # Преобразование типов
+    X = X.select_dtypes(include=[np.number]).fillna(0).astype(np.float32)
+    print(f"✅ Dataset loaded: {X.shape[0]:,} rows, {X.shape[1]} features")
+    return X, y
+
+
+# === ОБУЧЕНИЕ ============================================================
+def train_and_save(X, y, out_path=MODEL_PATH):
+    """Обучает RandomForest и сохраняет модель"""
+    # Удаляем старую модель, если есть
+    if os.path.exists(out_path):
+        try:
+            os.remove(out_path)
+            print(f"🧹 Старый файл модели удалён: {out_path}")
+        except PermissionError:
+            print(f"⚠️ Не удалось удалить старую модель (файл занят). Закрой процессы и повтори.")
+            return None
+
+    print("⚙️  Splitting train/test...")
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y if len(set(y)) > 1 else None
+    )
+
+    print("🌲 Training RandomForestClassifier...")
+    clf = RandomForestClassifier(
+        n_estimators=200,
+        max_depth=None,
+        random_state=42,
+        n_jobs=-1
+    )
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    print("[TRAIN REPORT]")
-    print(classification_report(y_test, y_pred))
-    # save model and metadata
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    joblib.dump({'model': clf, 'columns': list(X.columns), 'trained_at': time.time()}, out_path)
-    print(f"[OK] Model saved to {out_path}")
+
+    print("\n📊 [TRAIN REPORT]")
+    print(classification_report(y_test, y_pred, zero_division=0))
+    print(f"✅ Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+
+    joblib.dump({
+        "model": clf,
+        "features": X.columns.tolist(),
+        "trained_at": time.time()
+    }, out_path)
+
+    print(f"💾 Model saved to: {out_path}")
     return out_path
 
-# simple synthetic demo generator (copied from earlier)
-def generate_demo_dataset(n=1000, random_state=42):
-    rng = np.random.RandomState(random_state)
-    duration = rng.exponential(scale=1.0, size=n)
-    packets = rng.poisson(lam=5, size=n)
-    bytes_ = packets * (rng.uniform(40, 1500, size=n))
-    sport = rng.randint(1024, 65535, size=n)
-    dport = rng.choice([80, 443, 53, 22, 123, 8080, 3306], size=n, p=[0.25,0.25,0.1,0.05,0.05,0.15,0.15])
-    proto = rng.choice([6,17], size=n, p=[0.7,0.3])
-    score = (packets * duration * (bytes_/1000.0)) + (proto==17)*5
-    y = (score > np.percentile(score, 70)).astype(int)
-    X = pd.DataFrame({
-        'duration': duration,
-        'packets': packets,
-        'bytes': bytes_,
-        'sport': sport,
-        'dport': dport,
-        'proto': proto
-    })
-    return X, pd.Series(y, name='label')
 
-def retrain_if_needed(merged_dataset_path=None, force=False):
-    """Retrain model if merged dataset is newer than existing model, or if force=True."""
-    if merged_dataset_path is None:
-        merged_dataset_path = os.path.join(os.path.dirname(__file__), '..', 'datasets', 'merged_dataset.csv')
-    if not os.path.exists(merged_dataset_path):
-        print("Merged dataset not found:", merged_dataset_path)
+# === АВТО-ПЕРЕОБУЧЕНИЕ ===================================================
+def retrain_if_needed(force=False):
+    """Переобучает модель, если датасет изменился"""
+    if not os.path.exists(DATASET_PATH):
+        print("❌ Merged dataset not found:", DATASET_PATH)
         return None
-    if not os.path.exists(MODEL_PATH) or force:
-        print("Training new model because model not present or force=True")
-        return train_and_save(csv_files=[merged_dataset_path])
-    # compare mtimes
+
+    if not os.path.exists(MODEL_PATH):
+        print("📘 No model found — training new one...")
+        X, y = load_dataset()
+        return train_and_save(X, y)
+
     model_mtime = os.path.getmtime(MODEL_PATH)
-    data_mtime = os.path.getmtime(merged_dataset_path)
-    if data_mtime > model_mtime:
-        print("Merged dataset is newer than existing model — retraining...")
-        return train_and_save(csv_files=[merged_dataset_path])
-    print("No retraining needed. Model is up-to-date.")
+    data_mtime = os.path.getmtime(DATASET_PATH)
+    if force or data_mtime > model_mtime:
+        print("🔁 Dataset is newer — retraining model...")
+        X, y = load_dataset()
+        return train_and_save(X, y)
+
+    print("✅ Model is up-to-date.")
     return MODEL_PATH
 
+
+# === MAIN ================================================================
 if __name__ == "__main__":
-    # CLI: if args provided, treat them as CSV files; else try to process datasets and train
-    if len(sys.argv) > 1:
-        files = sys.argv[1:]
-        train_and_save(csv_files=files)
-    else:
-        train_and_save(demo=True)
+    label_mode = "binary"  # можно также "multi"
+    if len(sys.argv) > 1 and sys.argv[1] in ("binary", "multi"):
+        label_mode = sys.argv[1]
+
+    X, y = load_dataset(label_type=label_mode)
+    train_and_save(X, y)

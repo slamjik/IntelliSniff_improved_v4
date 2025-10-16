@@ -5,3 +5,16 @@ __pycache__/
 datasets/
 *.zip
 *.parquet
+# Исключаем модели, датасеты и большие бинарники
+*.joblib
+*.pkl
+*.h5
+*.pt
+*.onnx
+*.parquet
+*.zip
+*.tar
+*.gz
+*.csv
+datasets/
+data/
