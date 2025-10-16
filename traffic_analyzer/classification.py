@@ -1,36 +1,120 @@
-import os, joblib, numpy as np
+# traffic_analyzer/classification.py
+import os
+import joblib
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from typing import Dict
+from typing import Dict, Optional
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 MODEL_PATH = os.path.join(DATA_DIR, 'model.joblib')
+os.makedirs(DATA_DIR, exist_ok=True)
+
+FEATURE_NAMES = ['duration','packets','bytes','pkts_per_s','bytes_per_s','avg_pkt_size']
 
 def train_demo_model(path=MODEL_PATH):
+    """Train a synthetic but realistic model (6 features) and save it."""
     rng = np.random.RandomState(42)
     X = []
     y = []
+    # web-like flows: short duration, moderate bytes
+    for i in range(800):
+        duration = rng.exponential(scale=1.0)
+        packets = max(1, int(rng.poisson(10)))
+        bytes_ = int(rng.normal(loc=2000, scale=800))
+        pkts_per_s = packets / duration if duration>0 else packets
+        bytes_per_s = bytes_ / duration if duration>0 else bytes_
+        avg_pkt = bytes_/packets if packets>0 else 0
+        X.append([duration, packets, bytes_, pkts_per_s, bytes_per_s, avg_pkt])
+        y.append('web')
+    # p2p-like flows: long duration, many packets
+    for i in range(400):
+        duration = rng.exponential(scale=30.0)+5
+        packets = max(5, int(rng.poisson(200)))
+        bytes_ = int(rng.normal(loc=200000, scale=50000))
+        pkts_per_s = packets / duration if duration>0 else packets
+        bytes_per_s = bytes_ / duration if duration>0 else bytes_
+        avg_pkt = bytes_/packets if packets>0 else 0
+        X.append([duration, packets, bytes_, pkts_per_s, bytes_per_s, avg_pkt])
+        y.append('p2p')
+    # dns-like flows: tiny bytes, tiny duration
     for i in range(300):
-        X.append([rng.normal(1.0,0.3), rng.normal(40,12), rng.normal(1500,400)]); y.append(0) # web
+        duration = rng.exponential(scale=0.05)
+        packets = 1
+        bytes_ = int(rng.normal(loc=200, scale=80))
+        pkts_per_s = packets / duration if duration>0 else packets
+        bytes_per_s = bytes_ / duration if duration>0 else bytes_
+        avg_pkt = bytes_/packets if packets>0 else 0
+        X.append([duration, packets, bytes_, pkts_per_s, bytes_per_s, avg_pkt])
+        y.append('dns')
+    # malware/scan-like flows: many small packets short duration
     for i in range(300):
-        X.append([rng.normal(5.0,1.2), rng.normal(220,60), rng.normal(25000,5000)]); y.append(1) # vpn
-    for i in range(300):
-        X.append([rng.normal(0.4,0.08), rng.normal(8,3), rng.normal(400,80)]); y.append(2) # voip
-    X = np.array(X); y = np.array(y)
+        duration = rng.exponential(scale=0.5)
+        packets = max(1, int(rng.poisson(50)))
+        bytes_ = int(rng.normal(loc=4000, scale=2000))
+        pkts_per_s = packets / duration if duration>0 else packets
+        bytes_per_s = bytes_ / duration if duration>0 else bytes_
+        avg_pkt = bytes_/packets if packets>0 else 0
+        X.append([duration, packets, bytes_, pkts_per_s, bytes_per_s, avg_pkt])
+        y.append('malware')
+    X = np.array(X)
+    y = np.array(y)
     clf = RandomForestClassifier(n_estimators=100, random_state=42)
-    clf.fit(X,y)
+    clf.fit(X, y)
+    # Save model and a small metadata dict
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    joblib.dump(clf, path)
+    joblib.dump({'model': clf, 'features': FEATURE_NAMES}, path)
     return path
 
 def load_model(path=MODEL_PATH):
-    if os.path.exists(path):
-        return joblib.load(path)
-    return None
+    """Load model dict (contains model and features)."""
+    if not os.path.exists(path):
+        # train demo model on first use
+        train_demo_model(path)
+    obj = joblib.load(path)
+    return obj.get('model'), obj.get('features')
 
-def predict_from_features(features: Dict, model):
-    v = [features.get('duration',0.0), features.get('packets',0), features.get('bytes',0)]
+def _features_from_dict(d: Dict):
+    """Convert feature dict to ordered list for model."""
+    return [float(d.get(fname, 0.0)) for fname in FEATURE_NAMES]
+
+def predict_from_features(feats: Dict, model=None):
+    """Return {'label':..., 'score':...} using provided model or load default."""
     if model is None:
-        return {'label':'unknown','score':0.0}
-    lab = int(model.predict([v])[0])
-    proba = float(model.predict_proba([v])[0].max())
-    labels = {0:'web',1:'vpn',2:'voip'}
-    return {'label':labels.get(lab,'unknown'),'score':proba}
+        model, _ = load_model()
+    # accept dict or list/array
+    if isinstance(feats, dict):
+        x = np.array([_features_from_dict(feats)])
+    else:
+        x = np.array([feats])
+    probs = None
+    try:
+        probs = model.predict_proba(x)[0]
+        labels = model.classes_
+        # pick top label and score
+        top_idx = int(np.argmax(probs))
+        return {'label': str(labels[top_idx]), 'score': float(probs[top_idx])}
+    except Exception:
+        # fallback to predict
+        lab = model.predict(x)[0]
+        return {'label': str(lab), 'score': 1.0}
+
+# Backwards-compatible single-packet classifier
+def classify_packet(pkt: Dict, model=None):
+    """ 
+    pkt: dict possibly containing duration/packets/bytes (flow), or raw packet fields.
+    """
+    # If pkt appears to be flow-like, use directly
+    if 'duration' in pkt or 'packets' in pkt or 'bytes' in pkt:
+        feats = {
+            'duration': float(pkt.get('duration',0.0)),
+            'packets': int(pkt.get('packets',0)),
+            'bytes': int(pkt.get('bytes',0)),
+            'pkts_per_s': float(pkt.get('pkts_per_s', pkt.get('packets',0))),
+            'bytes_per_s': float(pkt.get('bytes_per_s', pkt.get('bytes',0))),
+            'avg_pkt_size': float(pkt.get('avg_pkt_size', 0.0))
+        }
+    else:
+        # try to build minimal features
+        length = int(pkt.get('length', pkt.get('bytes', 0) or 0))
+        feats = {'duration': 0.0, 'packets': 1, 'bytes': length, 'pkts_per_s': 1.0, 'bytes_per_s': float(length), 'avg_pkt_size': float(length)}
+    return predict_from_features(feats, model)

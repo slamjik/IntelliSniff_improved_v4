@@ -5,43 +5,34 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/IntelliSniff_improved_v4.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/IntelliSniff_improved_v4.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README_ru.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/__main__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/analysis.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/assets/rules.example.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/assets/traffic_signatures.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/capture.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/core/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/core/capture.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/core/classifier.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/core/detections.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/core/dpi_rules.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/core/pyshark_backend.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/gui.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/io/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/io/exporters.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/reports.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/app.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/ui/style.qss" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/intellinsniff/utils.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run_tests.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup_win.bat" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/pcap_import/convert.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/model.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/data/model.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/ta_storage.db" beforeDir="false" afterPath="$PROJECT_DIR$/data/ta_storage.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/auth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/capture.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/classification.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/classification.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/event_bus.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/event_bus.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/features.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/features.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/streaming.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/streaming.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/train_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/train_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/templates/dashboard_full.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/templates/dashboard_full.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -70,12 +61,42 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.convert.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;
   }
 }</component>
+  <component name="RunManager">
+    <configuration name="convert" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="IntelliSniff_improved_v4" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pcap_import" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pcap_import/convert.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.convert" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
