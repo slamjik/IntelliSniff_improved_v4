@@ -5,29 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/datasets/merged_dataset.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pcap_import/convert.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_api.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_capture_basic.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/traffic_analyzer/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/traffic_analyzer/data/model.joblib" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/traffic_analyzer/dataset_preprocessor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/traffic_analyzer/nfstream_helper.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/model.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/data/model.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/ta_storage.db" beforeDir="false" afterPath="$PROJECT_DIR$/data/ta_storage.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/auth.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/capture.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/classification.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/classification.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/event_bus.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/event_bus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/features.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/features.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/storage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/streaming.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/streaming.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/train_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/train_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/templates/dashboard_full.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/templates/dashboard_full.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
