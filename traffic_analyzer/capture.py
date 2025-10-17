@@ -52,7 +52,7 @@ def _filter_interfaces(candidates: Iterable[str]) -> list[str]:
 
 
 def list_ifaces():
-    """Return available interfaces with IPs and add 'All interfaces' option."""
+    """Return available interfaces (с IP и без IP) и добавить 'Auto' и 'All interfaces'."""
     candidates = []
     if SCAPY_AVAILABLE:
         try:
@@ -67,25 +67,29 @@ def list_ifaces():
 
     filtered = _filter_interfaces(candidates)
 
-    # добавим IP для каждого интерфейса, если можем
+    named = []
     try:
         addrs = psutil.net_if_addrs()
-        named = []
         for iface in filtered:
             ips = [
                 snic.address
                 for snic in addrs.get(iface, [])
                 if snic.family == socket.AF_INET
             ]
-            if not ips:
-                continue  # пропускаем интерфейсы без IP
-            label = f"{iface} ({ips[0]})"
+            if ips:
+                label = f"{iface} ({ips[0]})"
+            else:
+                label = f"{iface} (no IP)"
             named.append(label)
-        named.insert(0, "All interfaces")
-        return named
     except Exception:
-        filtered.insert(0, "All interfaces")
-        return filtered
+        named = filtered
+
+    # Добавляем “Auto” и “All interfaces” в начало списка
+    named.insert(0, "All interfaces")
+    named.insert(0, "Auto")
+
+    return named
+
 
 
 def _normalize_iface_for_capture(label: Optional[str]) -> tuple[Optional[str], Optional[str]]:
