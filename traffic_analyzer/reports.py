@@ -11,9 +11,19 @@ def export_csv(path=None, limit=1000):
     rows = storage.recent(limit=limit)
     with open(path, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
-        w.writerow(['ts','src','dst','proto','packets','bytes','label'])
+        w.writerow(['ts','src','dst','proto','packets','bytes','label','label_name','score'])
         for r in rows:
-            w.writerow(r)
+            w.writerow([
+                r.get('ts'),
+                r.get('src'),
+                r.get('dst'),
+                r.get('proto'),
+                r.get('packets'),
+                r.get('bytes'),
+                r.get('label'),
+                r.get('label_name'),
+                r.get('score'),
+            ])
     return path
 
 def export_pdf(path=None, limit=500):
@@ -28,7 +38,11 @@ def export_pdf(path=None, limit=500):
     y -= 30
     c.setFont('Helvetica', 10)
     for r in rows:
-        line = f'{r[0]} {r[1]}->{r[2]} proto={r[3]} pkts={r[4]} bytes={r[5]} label={r[6]}'
+        line = (
+            f"{r.get('ts')} {r.get('src')}->{r.get('dst')} proto={r.get('proto')} "
+            f"pkts={r.get('packets')} bytes={r.get('bytes')} "
+            f"label={r.get('label_name') or r.get('label')}"
+        )
         c.drawString(40, y, line[:120])
         y -= 12
         if y < 40:

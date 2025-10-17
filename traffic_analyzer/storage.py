@@ -30,9 +30,15 @@ class Storage:
                 packets INTEGER,
                 bytes INTEGER,
                 label TEXT,
+                label_name TEXT,
                 score REAL,
                 summary TEXT
             )""")
+            # ensure newer columns exist even on legacy databases
+            cur = c.execute("PRAGMA table_info(flows)")
+            existing_cols = {row[1] for row in cur.fetchall()}
+            if 'label_name' not in existing_cols:
+                c.execute("ALTER TABLE flows ADD COLUMN label_name TEXT")
             c.commit()
 
     def _cleanup(self, conn: sqlite3.Connection, max_age_hours: Optional[float] = 24.0, max_rows: int = 5000):
@@ -122,8 +128,8 @@ class Storage:
                 else:
                     summary_value = self._as_text(summary) or ''
                 iface = self._as_text(flow.get('iface'))
-                c.execute("""INSERT INTO flows (ts,iface,src,dst,sport,dport,proto,packets,bytes,label,score,summary)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                c.execute("""INSERT INTO flows (ts,iface,src,dst,sport,dport,proto,packets,bytes,label,label_name,score,summary)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
                     self._as_float(flow.get('ts'), time.time()),
                     iface,
                     self._as_text(flow.get('src')),
@@ -134,6 +140,7 @@ class Storage:
                     self._as_int(flow.get('packets')),
                     self._as_int(flow.get('bytes')),
                     self._as_text(flow.get('label')) or 'unknown',
+                    self._as_text(flow.get('label_name')) or self._as_text(flow.get('label')) or 'unknown',
                     self._as_float(flow.get('score')),
                     summary_value
                 ))
@@ -150,9 +157,9 @@ class Storage:
             limit = 100
         limit = max(1, min(limit, 1000))
         with self._conn() as c:
-            cur = c.execute('SELECT ts,iface,src,dst,sport,dport,proto,packets,bytes,label,score,summary FROM flows ORDER BY ts DESC LIMIT ?', (limit,))
+            cur = c.execute('SELECT ts,iface,src,dst,sport,dport,proto,packets,bytes,label,label_name,score,summary FROM flows ORDER BY ts DESC LIMIT ?', (limit,))
             rows = cur.fetchall()
-            cols = ['ts','iface','src','dst','sport','dport','proto','packets','bytes','label','score','summary']
+            cols = ['ts','iface','src','dst','sport','dport','proto','packets','bytes','label','label_name','score','summary']
             return [dict(zip(cols, r)) for r in rows]
 
 storage = Storage()
