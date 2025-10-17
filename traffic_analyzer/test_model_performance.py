@@ -1,12 +1,22 @@
 import os
 import time
+
+import pytest
+
+if os.getenv("RUN_MODEL_PERF_TESTS") != "1":
+    pytest.skip(
+        "Heavy model performance test disabled. Set RUN_MODEL_PERF_TESTS=1 to enable.",
+        allow_module_level=True,
+    )
+
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.preprocessing import LabelEncoder
-import seaborn as sns
-import matplotlib.pyplot as plt
+
+sns = pytest.importorskip("seaborn")
+plt = pytest.importorskip("matplotlib.pyplot")
 
 # === Пути ===
 BASE_DIR = os.path.dirname(__file__)

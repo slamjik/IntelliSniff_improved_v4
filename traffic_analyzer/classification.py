@@ -14,7 +14,7 @@ FEATURE_NAMES = ['duration', 'packets', 'bytes', 'pkts_per_s', 'bytes_per_s', 'a
 
 # === Человеческие названия классов ============================================
 LABEL_NAMES = {
-    "0": "Normal",
+    "0": "Normal Traffic",
     "1": "DoS / DDoS Attack",
     "2": "Port Scan / Recon",
     "3": "Botnet Activity",
@@ -22,7 +22,45 @@ LABEL_NAMES = {
     "5": "Web Attack (XSS / SQLi)",
     "6": "Exploit / Heartbleed",
     "7": "Unknown / Rare Anomaly",
+    # распространённые строковые метки из датасетов CIC/UNSW и т.п.
+    "benign": "Normal Traffic",
+    "normal": "Normal Traffic",
+    "nonvpn": "Normal Traffic",
+    "attack": "Suspicious / Attack",
+    "dos": "DoS Attack",
+    "ddos": "DDoS Attack",
+    "bruteforce": "Brute Force Attack",
+    "portscan": "Port Scan / Recon",
+    "botnet": "Botnet Activity",
+    "infiltration": "Infiltration Attempt",
+    "webattack": "Web Application Attack",
 }
+
+
+def resolve_label_name(label: Optional[object]) -> str:
+    """Return human readable label for numeric or textual model output."""
+    if label is None:
+        return "Unknown"
+
+    # Пробуем прямое соответствие и числовые строки
+    label_str = str(label)
+    if label_str in LABEL_NAMES:
+        return LABEL_NAMES[label_str]
+
+    # Нормализуем для текстовых меток
+    normalized = label_str.strip().lower()
+    if normalized in LABEL_NAMES:
+        return LABEL_NAMES[normalized]
+
+    # Классы sklearn могут быть числовыми типами (int64, np.int32 и т.п.)
+    try:
+        as_int = int(float(label_str))
+    except (TypeError, ValueError):
+        as_int = None
+    if as_int is not None and str(as_int) in LABEL_NAMES:
+        return LABEL_NAMES[str(as_int)]
+
+    return f"Class {label_str}" if label_str else "Unknown"
 
 
 # === Обучение демо-модели =====================================================
@@ -143,9 +181,10 @@ def predict_from_features(feats: Dict, model=None, feature_names=None):
         labels = model.classes_
         top_idx = int(np.argmax(probs))
 
+        label_value = labels[top_idx]
         return {
-            'label': str(labels[top_idx]),
-            'label_name': LABEL_NAMES.get(str(labels[top_idx]), f"Class {labels[top_idx]}"),
+            'label': str(label_value),
+            'label_name': resolve_label_name(label_value),
             'score': float(probs[top_idx])
         }
 
@@ -160,7 +199,7 @@ def predict_from_features(feats: Dict, model=None, feature_names=None):
             lab = model.predict(x)[0]
             return {
                 'label': str(lab),
-                'label_name': LABEL_NAMES.get(str(lab), f"Class {lab}"),
+                'label_name': resolve_label_name(lab),
                 'score': 1.0
             }
         except Exception:
