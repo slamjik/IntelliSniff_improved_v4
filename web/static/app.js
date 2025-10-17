@@ -264,6 +264,8 @@ function renderTable() {
   const tbody = ui.tableBody;
   const search = ui.tableSearch.value.trim().toLowerCase();
   const selectedLabel = ui.labelFilter.value;
+
+  // Фильтрация строк таблицы
   const filtered = state.flows.filter((flow) => {
     if (selectedLabel !== 'all' && flow.label !== selectedLabel) return false;
     if (!search) return true;
@@ -272,6 +274,7 @@ function renderTable() {
       flow.dst,
       flow.proto,
       flow.label,
+      flow.label_name,
       flow.sport,
       flow.dport,
       JSON.stringify(flow.summary || {}),
@@ -282,10 +285,20 @@ function renderTable() {
   });
 
   ui.tableCounter.textContent = `${filtered.length} записей`;
+
+  // Генерация строк таблицы
   tbody.innerHTML = filtered
     .map((flow) => {
+      const labelName = flow.label_name || flow.label || 'Unknown';
       const score = flow.score !== undefined ? `${Math.round(flow.score * 100)}%` : '—';
-      const labelClass = isBenign(flow.label) ? 'badge badge-ok' : 'badge badge-alert';
+
+      // Определяем цветовую метку риска
+      let labelColor = 'gray';
+      if (/normal|benign|allow/i.test(labelName)) labelColor = 'limegreen';
+      else if (/attack|malware|botnet|exploit/i.test(labelName)) labelColor = 'crimson';
+      else if (/scan|recon|brute/i.test(labelName)) labelColor = 'orange';
+
+      // Чипы с полезными данными (SNI, DNS, HTTP и т.д.)
       const summaryChips = [];
       if (flow.summary && typeof flow.summary === 'object') {
         const interesting = ['tls_sni', 'http_host', 'dns_query', 'app'];
@@ -303,6 +316,8 @@ function renderTable() {
           );
         }
       }
+
+      // Формирование HTML строки
       return `
         <tr>
           <td>${formatDate(flow.ts)}</td>
@@ -310,7 +325,7 @@ function renderTable() {
           <td>${flow.dst || ''}</td>
           <td>${flow.sport || ''} → ${flow.dport || ''}</td>
           <td>${flow.proto || ''}</td>
-          <td><span class="${labelClass}">${flow.label || '—'}</span></td>
+          <td><span style="color:${labelColor}; font-weight:600">${labelName}</span></td>
           <td>${score}</td>
           <td>${formatNumber(flow.packets)}</td>
           <td>${formatNumber(flow.bytes)}</td>
@@ -319,6 +334,7 @@ function renderTable() {
     })
     .join('');
 }
+
 
 function updateLabelCounts(flow) {
   const label = flow.label || 'unknown';
