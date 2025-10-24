@@ -6,6 +6,15 @@ const state = {
   trafficHistory: [],
   lastStatus: null,
   websocket: null,
+  ml: {
+    tasks: ['attack', 'vpn', 'anomaly'],
+    versions: {},
+    active: {},
+    metrics: {},
+    drift: {},
+    autoUpdate: true,
+    predictions: [],
+  },
 };
 
 const ui = {};
@@ -264,6 +273,8 @@ function renderTable() {
   const tbody = ui.tableBody;
   const search = ui.tableSearch.value.trim().toLowerCase();
   const selectedLabel = ui.labelFilter.value;
+
+  // Фильтрация строк таблицы
   const filtered = state.flows.filter((flow) => {
     if (selectedLabel !== 'all' && flow.label !== selectedLabel) return false;
     if (!search) return true;
@@ -272,6 +283,7 @@ function renderTable() {
       flow.dst,
       flow.proto,
       flow.label,
+      flow.label_name,
       flow.sport,
       flow.dport,
       JSON.stringify(flow.summary || {}),
@@ -282,17 +294,39 @@ function renderTable() {
   });
 
   ui.tableCounter.textContent = `${filtered.length} записей`;
+
+  // Генерация строк таблицы
   tbody.innerHTML = filtered
     .map((flow) => {
+      const labelName = flow.label_name || flow.label || 'Unknown';
       const score = flow.score !== undefined ? `${Math.round(flow.score * 100)}%` : '—';
-      const labelClass = isBenign(flow.label) ? 'badge badge-ok' : 'badge badge-alert';
+
+      // Определяем цветовую метку риска
+      let labelColor = 'gray';
+      if (/normal|benign|allow/i.test(labelName)) labelColor = 'limegreen';
+      else if (/attack|malware|botnet|exploit/i.test(labelName)) labelColor = 'crimson';
+      else if (/scan|recon|brute/i.test(labelName)) labelColor = 'orange';
+
+      // Чипы с полезными данными (SNI, DNS, HTTP и т.д.)
       const summaryChips = [];
       if (flow.summary && typeof flow.summary === 'object') {
-        const interesting = ['tls_sni', 'http_host', 'dns_query', 'app'];
+        const interesting = ['модель', 'уверенность', 'tls_sni', 'http_host', 'dns_query', 'app'];
         for (const key of interesting) {
           if (flow.summary[key]) {
-            summaryChips.push(`<span class="summary-chip">${key}: ${flow.summary[key]}</span>`);
+            let value = flow.summary[key];
+            if (key === 'уверенность') {
+              value = `${formatNumber((Number(value) || 0) * 100, 1)}%`;
+            }
+            summaryChips.push(`<span class="summary-chip">${key}: ${value}</span>`);
           }
+        }
+        if (Array.isArray(flow.summary['важные_признаки'])) {
+          flow.summary['важные_признаки'].slice(0, 2).forEach((item) => {
+            if (item && item.feature) {
+              const value = typeof item.value === 'number' ? item.value.toFixed(2) : item.value;
+              summaryChips.push(`<span class="summary-chip">${item.feature}: ${value}</span>`);
+            }
+          });
         }
         if (!summaryChips.length) {
           summaryChips.push(
@@ -303,6 +337,8 @@ function renderTable() {
           );
         }
       }
+
+      // Формирование HTML строки
       return `
         <tr>
           <td>${formatDate(flow.ts)}</td>
@@ -310,7 +346,7 @@ function renderTable() {
           <td>${flow.dst || ''}</td>
           <td>${flow.sport || ''} → ${flow.dport || ''}</td>
           <td>${flow.proto || ''}</td>
-          <td><span class="${labelClass}">${flow.label || '—'}</span></td>
+          <td><span style="color:${labelColor}; font-weight:600">${labelName}</span></td>
           <td>${score}</td>
           <td>${formatNumber(flow.packets)}</td>
           <td>${formatNumber(flow.bytes)}</td>
@@ -319,6 +355,7 @@ function renderTable() {
     })
     .join('');
 }
+
 
 function updateLabelCounts(flow) {
   const label = flow.label || 'unknown';
@@ -363,6 +400,7 @@ async function loadInitialData() {
     state.destBytes = new Map();
     state.trafficHistory = [];
     (flowsResp.items || []).reverse().forEach(addFlow);
+    await loadMlDashboard();
   } catch (err) {
     console.error(err);
     ui.statusDetails.textContent = 'Ошибка загрузки данных: ' + err.message;
@@ -370,6 +408,192 @@ async function loadInitialData() {
   }
 }
 
+async function loadMlDashboard() {
+  try {
+    const [status, quality, autoUpdate, drift, predictions] = await Promise.all([
+      apiFetch('/model_status'),
+      apiFetch('/quality_metrics'),
+      apiFetch('/auto_update_status'),
+      apiFetch('/drift_status'),
+      apiFetch('/ml/predictions?limit=50'),
+    ]);
+    const versionsResponses = await Promise.all(
+      state.ml.tasks.map((task) => apiFetch(`/get_versions?task=${task}`))
+    );
+    versionsResponses.forEach((resp) => {
+      if (resp && resp.task) {
+        state.ml.versions[resp.task] = resp.versions || [];
+      }
+    });
+    state.ml.active = status || {};
+    state.ml.metrics = quality || {};
+    state.ml.drift = drift || {};
+    state.ml.autoUpdate = !!(autoUpdate && autoUpdate.enabled);
+    state.ml.predictions = (predictions.items || []).map((item) => ({ ...item }));
+    renderMlSection();
+    renderMlPredictions();
+  } catch (err) {
+    console.error('Failed to load ML dashboard', err);
+  }
+}
+
+function renderMlSection() {
+  if (!ui.mlCards) return;
+  if (ui.autoUpdateToggle) {
+    ui.autoUpdateToggle.checked = !!state.ml.autoUpdate;
+  }
+  ui.mlCards.forEach((card) => {
+    const task = card.dataset.task;
+    const select = card.querySelector('[data-role="versions"]');
+    const metricsBox = card.querySelector('[data-role="metrics"]');
+    const driftBox = card.querySelector('[data-role="drift"]');
+    const activeBox = card.querySelector('[data-role="active"]');
+    const versions = state.ml.versions[task] || [];
+    if (select) {
+      const current = select.value;
+      select.innerHTML = '';
+      versions.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.version;
+        option.textContent = item.version;
+        if (item.active || item.version === current) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    }
+    const activeInfo = state.ml.active?.[task];
+    const activeVersion = activeInfo?.version || (select && select.value) || (versions[0] && versions[0].version);
+    if (activeBox) {
+      activeBox.textContent = activeVersion ? `Активна: ${activeVersion}` : 'Нет активной версии';
+    }
+    if (select && activeVersion && !select.value) {
+      select.value = activeVersion;
+    }
+    const metricsSource = versions.find((v) => v.version === (select && select.value ? select.value : activeVersion)) || {};
+    if (metricsBox) {
+      const metrics = ['precision', 'recall', 'f1', 'drift_resilience']
+        .map((key) => ({ key, value: Number(metricsSource[`metric_${key}`]) }))
+        .filter((item) => !Number.isNaN(item.value) && item.value >= 0);
+      if (metrics.length) {
+        metricsBox.innerHTML = metrics
+          .map((m) => `<span>${m.key.toUpperCase()}: ${(m.value * 100).toFixed(1)}%</span>`)
+          .join('<span class="ml-metric-divider">·</span>');
+      } else {
+        metricsBox.innerHTML = '<span class="ml-metric-muted">Нет метрик</span>';
+      }
+    }
+    if (driftBox) {
+      const driftInfo = state.ml.drift?.[task];
+      if (driftInfo && driftInfo.drift) {
+        driftBox.textContent = `Дрейф! JSD ${Number(driftInfo.jsd || 0).toFixed(2)}, Z ${Number(driftInfo.z_score || 0).toFixed(2)}`;
+        card.classList.add('ml-card-warning');
+      } else {
+        driftBox.textContent = 'Дрейф не обнаружен';
+        card.classList.remove('ml-card-warning');
+      }
+    }
+  });
+}
+
+function renderMlPredictions() {
+  if (!ui.mlPredictionsBody) return;
+  ui.mlPredictionsBody.innerHTML = '';
+  state.ml.predictions.slice(0, 40).forEach((pred) => {
+    const tr = document.createElement('tr');
+    const ts = pred.timestamp ? formatDate(Number(pred.timestamp) * 1000) : '—';
+    const explanation = Array.isArray(pred.explanation)
+      ? pred.explanation
+          .map((item) => `${item.feature}: ${item.value?.toFixed ? item.value.toFixed(2) : item.value}`)
+          .join(', ')
+      : '';
+    tr.innerHTML = `
+      <td>${ts}</td>
+      <td>${pred.task || 'attack'}</td>
+      <td>${pred.label_name || pred.label || '—'}</td>
+      <td>${formatNumber((pred.confidence || pred.score || 0) * 100, 1)}%</td>
+      <td>${pred.version || '—'}</td>
+      <td>${explanation || '—'}</td>
+    `;
+    ui.mlPredictionsBody.appendChild(tr);
+  });
+}
+
+function handleMlPrediction(prediction) {
+  if (!prediction) return;
+  state.ml.predictions.unshift(prediction);
+  if (state.ml.predictions.length > 80) {
+    state.ml.predictions.pop();
+  }
+  if (prediction.drift) {
+    state.ml.drift[prediction.task] = prediction.drift;
+    if (prediction.drift.drift) {
+      setStatusBadge('warning');
+    }
+  }
+  renderMlPredictions();
+  renderMlSection();
+}
+
+function handleDriftEvent(event) {
+  if (!event || !event.task) return;
+  state.ml.drift[event.task] = event;
+  setStatusBadge('warning');
+  renderMlSection();
+}
+
+function handleModelUpdate(event) {
+  if (!event || !event.task) return;
+  loadMlDashboard();
+  const statusText = event.status === 'activated' ? '✅ Модель активирована' : '⚠️ Модель отклонена';
+  ui.statusDetails.textContent = `${statusText} (${event.task} · ${event.version})`;
+}
+
+function handleAutoUpdate(event) {
+  if (!event) return;
+  state.ml.autoUpdate = !!event.enabled;
+  renderMlSection();
+}
+
+async function handleSwitchRequest(task, version) {
+  try {
+    await apiFetch('/switch_model', {
+      method: 'POST',
+      body: JSON.stringify({ task, version }),
+    });
+    await loadMlDashboard();
+  } catch (err) {
+    alert('Не удалось переключить модель: ' + err.message);
+  }
+}
+
+async function handleValidationRequest(task, version) {
+  try {
+    await apiFetch('/trigger_validation', {
+      method: 'POST',
+      body: JSON.stringify({ task, version }),
+    });
+    ui.statusDetails.textContent = `Валидация модели ${version} запущена`;
+  } catch (err) {
+    alert('Ошибка валидации: ' + err.message);
+  }
+}
+
+async function toggleAutoUpdate(enabled) {
+  try {
+    await apiFetch('/auto_update_toggle', {
+      method: 'POST',
+      body: JSON.stringify({ enabled }),
+    });
+    state.ml.autoUpdate = enabled;
+    renderMlSection();
+  } catch (err) {
+    alert('Не удалось обновить настройку автообновления: ' + err.message);
+    if (ui.autoUpdateToggle) {
+      ui.autoUpdateToggle.checked = !enabled;
+    }
+  }
+}
 function populateInterfaces(interfaces) {
   const select = ui.iface;
   const current = select.value;
@@ -394,8 +618,24 @@ function setupWebSocket() {
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data);
-      if (msg.topic === 'flow') {
-        addFlow(msg.data);
+      switch (msg.topic) {
+        case 'flow':
+          addFlow(msg.data);
+          break;
+        case 'ml_prediction':
+          handleMlPrediction(msg.data);
+          break;
+        case 'drift':
+          handleDriftEvent(msg.data);
+          break;
+        case 'model_update':
+          handleModelUpdate(msg.data);
+          break;
+        case 'auto_update':
+          handleAutoUpdate(msg.data);
+          break;
+        default:
+          break;
       }
     } catch (err) {
       console.error('WS message error', err);
@@ -504,6 +744,42 @@ function bindEvents() {
   ui.tableSearch.addEventListener('input', () => {
     renderTable();
   });
+  if (ui.autoUpdateToggle) {
+    ui.autoUpdateToggle.addEventListener('change', (e) => {
+      toggleAutoUpdate(e.target.checked);
+    });
+  }
+  if (ui.mlCards && ui.mlCards.length) {
+    ui.mlCards.forEach((card) => {
+      const task = card.dataset.task;
+      const select = card.querySelector('[data-role="versions"]');
+      const switchBtn = card.querySelector('[data-action="switch"]');
+      const validateBtn = card.querySelector('[data-action="validate"]');
+      if (select) {
+        select.addEventListener('change', renderMlSection);
+      }
+      if (switchBtn && select) {
+        switchBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const version = select.value || (select.options[0] && select.options[0].value);
+          if (version) handleSwitchRequest(task, version);
+        });
+      }
+      if (validateBtn && select) {
+        validateBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const version = select.value || (select.options[0] && select.options[0].value);
+          if (version) handleValidationRequest(task, version);
+        });
+      }
+    });
+  }
+  if (ui.mlRefreshBtn) {
+    ui.mlRefreshBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      loadMlDashboard();
+    });
+  }
 }
 
 function collectUi() {
@@ -531,6 +807,11 @@ function collectUi() {
   ui.tableBody = document.querySelector('#flowsTable tbody');
   ui.tableSearch = document.getElementById('tableSearch');
   ui.tableCounter = document.getElementById('tableCounter');
+  ui.mlGrid = document.getElementById('mlGrid');
+  ui.mlCards = Array.from(document.querySelectorAll('.ml-card'));
+  ui.autoUpdateToggle = document.getElementById('autoUpdateToggle');
+  ui.mlPredictionsBody = document.querySelector('#mlPredictions tbody');
+  ui.mlRefreshBtn = document.getElementById('refreshMl');
 }
 
 async function verifyAuth(login, password) {

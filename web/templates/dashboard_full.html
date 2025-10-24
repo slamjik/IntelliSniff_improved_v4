@@ -69,6 +69,84 @@
     <div id="statusDetails" class="status-details"></div>
   </section>
 
+  <section class="ml-section">
+    <div class="ml-header">
+      <h2>ML-инфраструктура</h2>
+      <label class="ml-toggle">
+        <input type="checkbox" id="autoUpdateToggle" checked>
+        <span>Автообновление моделей</span>
+      </label>
+    </div>
+    <div class="ml-grid" id="mlGrid">
+      <div class="ml-card" data-task="attack">
+        <div class="ml-card-header">
+          <h3>Детекция атак</h3>
+          <span class="ml-active" data-role="active">—</span>
+        </div>
+        <label>Версия модели
+          <select data-role="versions"></select>
+        </label>
+        <div class="ml-actions">
+          <button data-action="switch" class="primary">Активировать</button>
+          <button data-action="validate" class="ghost">Валидировать</button>
+        </div>
+        <div class="ml-metrics" data-role="metrics"></div>
+        <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
+      </div>
+      <div class="ml-card" data-task="vpn">
+        <div class="ml-card-header">
+          <h3>VPN классификация</h3>
+          <span class="ml-active" data-role="active">—</span>
+        </div>
+        <label>Версия модели
+          <select data-role="versions"></select>
+        </label>
+        <div class="ml-actions">
+          <button data-action="switch" class="primary">Активировать</button>
+          <button data-action="validate" class="ghost">Валидировать</button>
+        </div>
+        <div class="ml-metrics" data-role="metrics"></div>
+        <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
+      </div>
+      <div class="ml-card" data-task="anomaly">
+        <div class="ml-card-header">
+          <h3>Аномалии</h3>
+          <span class="ml-active" data-role="active">—</span>
+        </div>
+        <label>Версия модели
+          <select data-role="versions"></select>
+        </label>
+        <div class="ml-actions">
+          <button data-action="switch" class="primary">Активировать</button>
+          <button data-action="validate" class="ghost">Валидировать</button>
+        </div>
+        <div class="ml-metrics" data-role="metrics"></div>
+        <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
+      </div>
+    </div>
+    <div class="ml-predictions">
+      <div class="ml-predictions-header">
+        <h3>Последние предсказания моделей</h3>
+        <button id="refreshMl" class="ghost">Обновить</button>
+      </div>
+      <div class="ml-predictions-table">
+        <table id="mlPredictions">
+          <thead>
+            <tr>
+              <th>Время</th>
+              <th>Задача</th>
+              <th>Метка</th>
+              <th>Уверенность</th>
+              <th>Версия</th>
+              <th>Объяснение</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <section class="cards-grid">
     <div class="info-card">
       <h3>Всего потоков</h3>

@@ -1,0 +1,35 @@
+{
+  "attack": {
+    "active": "model_attack_demo.pkl",
+    "available": {
+      "model_attack_demo.pkl": {
+        "path": "models/model_attack_demo.pkl",
+        "created_at": null,
+        "trained_at": null,
+        "notes": "Demo attack detection model"
+      }
+    }
+  },
+  "vpn": {
+    "active": "model_vpn_demo.pkl",
+    "available": {
+      "model_vpn_demo.pkl": {
+        "path": "models/model_vpn_demo.pkl",
+        "created_at": null,
+        "trained_at": null,
+        "notes": "Demo VPN classifier"
+      }
+    }
+  },
+  "anomaly": {
+    "active": "model_anomaly_demo.pkl",
+    "available": {
+      "model_anomaly_demo.pkl": {
+        "path": "models/model_anomaly_demo.pkl",
+        "created_at": null,
+        "trained_at": null,
+        "notes": "Demo anomaly detector"
+      }
+    }
+  }
+}
