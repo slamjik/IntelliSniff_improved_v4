@@ -22,6 +22,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from . import capture, event_bus, storage
+from .ml_runtime import get_auto_updater, get_drift_detector, get_model_manager, get_predictor
 from .auth import get_current_username
 
 
@@ -40,12 +41,36 @@ class StartCaptureRequest(BaseModel):
 class TrainRequest(BaseModel):
     demo: bool = Field(default=True, description="Использовать демонстрационный датасет")
 
+class PredictRequest(BaseModel):
+    task: str = Field(default='attack', description='ML task (attack/vpn/anomaly)')
+    features: dict = Field(default_factory=dict)
+    metadata: Optional[dict] = Field(default=None, description='Optional context information')
+
+
+class SwitchModelRequest(BaseModel):
+    task: str = Field(default='attack')
+    version: str = Field(..., description='Version identifier from registry.json')
+
+
+class ValidationRequest(BaseModel):
+    task: str = Field(default='attack')
+    version: str = Field(..., description='Filename of the candidate model in ml/models')
+    dataset: Optional[str] = Field(default=None, description='Optional path to dataset for validation')
+
+
+class AutoUpdateToggleRequest(BaseModel):
+    enabled: bool = Field(default=True)
+
 
 app = FastAPI(
     title="IntelliSniff — Анализатор трафика",
     description="Веб-интерфейс для мониторинга, анализа и отчётности по сетевым потокам",
 )
 
+model_manager = get_model_manager()
+predictor = get_predictor()
+drift_detector = get_drift_detector()
+auto_updater = get_auto_updater()
 
 templates = Jinja2Templates(
     directory=os.path.join(os.path.dirname(__file__), "..", "web", "templates")
@@ -147,6 +172,66 @@ def api_train(
 @app.get("/status")
 def api_status(user: str = Depends(get_current_username)):
     return capture.get_status()
+
+@app.post('/predict')
+def api_predict(payload: PredictRequest, user: str = Depends(get_current_username)):
+    return predictor.predict(payload.features, task=payload.task, metadata=payload.metadata)
+
+
+@app.post('/switch_model')
+def api_switch_model(payload: SwitchModelRequest, user: str = Depends(get_current_username)):
+    info = model_manager.switch_model(payload.task, payload.version)
+    return info
+
+
+@app.get('/get_versions')
+def api_get_versions(task: str = Query('attack'), user: str = Depends(get_current_username)):
+    return {'task': task, 'versions': model_manager.get_versions(task)}
+
+
+@app.get('/model_status')
+def api_model_status(user: str = Depends(get_current_username)):
+    data = {}
+    for task in model_manager.list_tasks():
+        info = model_manager.get_active_model_info(task)
+        data[task] = info.to_dict() if info else None
+    return data
+
+
+@app.get('/drift_status')
+def api_drift_status(user: str = Depends(get_current_username)):
+    return drift_detector.get_status()
+
+
+@app.get('/ml/predictions')
+def api_ml_predictions(limit: int = Query(50, ge=1, le=500), user: str = Depends(get_current_username)):
+    data = predictor.get_buffer()
+    return {'items': list(reversed(data[-limit:]))}
+
+
+@app.post('/trigger_validation')
+def api_trigger_validation(payload: ValidationRequest, user: str = Depends(get_current_username)):
+    return auto_updater.validate_and_maybe_activate(payload.task, payload.version, payload.dataset)
+
+
+@app.post('/auto_update_toggle')
+def api_toggle_auto_update(payload: AutoUpdateToggleRequest, user: str = Depends(get_current_username)):
+    auto_updater.toggle(payload.enabled)
+    return {'enabled': auto_updater.enabled}
+
+
+@app.get('/quality_metrics')
+def api_quality_metrics(user: str = Depends(get_current_username)):
+    summary = {}
+    for task in model_manager.list_tasks():
+        versions = model_manager.get_versions(task)
+        summary[task] = versions
+    return summary
+
+
+@app.get('/auto_update_status')
+def api_auto_update_status(user: str = Depends(get_current_username)):
+    return {'enabled': auto_updater.enabled}
 
 
 @app.get("/interfaces")
