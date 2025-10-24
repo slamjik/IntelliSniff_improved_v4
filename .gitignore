@@ -25,3 +25,8 @@ datasets/*
 # Но оставляем важные текстовые/настройки
 !traffic_analyzer/data/.keep
 !datasets/.keep
+# ML scaffolding artifacts
+!ml/data/
+!ml/data/live_buffer.json
+!ml/data/training_candidates.csv
+!ml/models/.gitkeep

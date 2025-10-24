@@ -1,18 +1,14 @@
-import logging, math, time, threading, os
+import logging, math, time, threading
 from collections import namedtuple
 from typing import Dict, Optional
 
 from .features import extract_features_from_flow
-from .classification import load_model, predict_from_features
 from .storage import storage
+from .ml_runtime import get_predictor, get_model_manager
 from .event_bus import publish
 
 log = logging.getLogger('ta.streaming')
 FlowKey = namedtuple('FlowKey', ['src', 'dst', 'sport', 'dport', 'proto'])
-
-# 📌 Абсолютный путь к твоей обученной модели
-MODEL_PATH = r"C:\Users\Olega\PycharmProjects\IntelliSniff_improved_v4\traffic_analyzer\data\model.joblib"
-
 
 # === Класс потока ============================================================
 class Flow:
@@ -51,38 +47,27 @@ _flows = {}
 _lock = threading.Lock()
 _flow_timeout = 30.0
 _stop_event = threading.Event()
-_model = None
-_model_features = []
 _flush_thread = None
 
 
 # === Инициализация потокового анализа =======================================
 def init_streaming(model_path: Optional[str] = None, flow_timeout: float = 30.0):
     """Загружает модель и запускает потоковый анализ."""
-    global _model, _model_features, _flow_timeout, _flush_thread
+    global _flow_timeout, _flush_thread
 
-    model_path = model_path or MODEL_PATH
-    if not os.path.exists(model_path):
-        log.warning("⚠️ Custom model not found at %s — falling back to demo.", model_path)
-        model, features = load_model()
-    else:
-        log.info("📦 Loading trained model from: %s", model_path)
-        model, features = load_model(model_path)
-
-    _model = model
-    _model_features = features or []
     _flow_timeout = float(flow_timeout)
     _stop_event.clear()
+    get_model_manager()  # ensure models are initialised
 
     if _flush_thread is None or not _flush_thread.is_alive():
         _flush_thread = threading.Thread(target=_flow_flush_loop, daemon=True)
         _flush_thread.start()
 
+    active = get_model_manager().get_active_model_info('attack')
     log.info(
-        "Streaming initialized. flow_timeout=%s | model=%s | features=%s",
+        "Streaming initialized. flow_timeout=%s | model=%s",
         _flow_timeout,
-        "loaded" if _model else "none",
-        len(_model_features) if _model_features else 0,
+        active.version if active else 'unknown',
     )
 
 
@@ -218,20 +203,19 @@ def _emit_flow(key):
         return
 
     feats = flow.metrics()
-    feats_logged = {k: v for k, v in feats.items() if isinstance(v, (int, float))}
-
-    res = {'label': 'unknown', 'label_name': 'Unknown', 'score': 0.0}
+    hints = {k: v for k, v in flow.extra.items() if v}
+    predictor = get_predictor()
     try:
-        if _model:
-            res = predict_from_features(feats, _model, _model_features)
+        features_payload = {**feats, **hints, 'duration': feats.get('duration'), 'iface': flow.iface}
+        res = predictor.predict(features_payload, task='attack')
     except Exception:
         log.exception("Model prediction error")
+        res = {'label': 'error', 'label_name': 'Prediction error', 'confidence': 0.0, 'explanation': []}
 
     duration_ms = int(max(0.0, (flow.last_ts - flow.first_ts)) * 1000)
     packets_per_sec = float(feats.get('pkts_per_s') or 0.0)
     bytes_per_sec = float(feats.get('bytes_per_s') or 0.0)
     avg_pkt_size = float(feats.get('avg_pkt_size') or 0.0)
-    hints = {k: v for k, v in flow.extra.items() if v}
 
     summary_dict = {
         'длительность_мс': duration_ms,
@@ -240,8 +224,14 @@ def _emit_flow(key):
         'пакетов_в_сек': round(packets_per_sec, 2),
         'байт_в_сек': round(bytes_per_sec, 2),
         'средний_размер_пакета': round(avg_pkt_size, 2),
+        'модель': res.get('version'),
+        'уверенность': round(res.get('confidence', 0.0), 3),
         **hints,
     }
+    if res.get('explanation'):
+        summary_dict['важные_признаки'] = res['explanation']
+    if res.get('drift'):
+        summary_dict['drift'] = res['drift']
 
     flow_dict = {
         'ts': int(flow.last_ts * 1000),
@@ -255,12 +245,14 @@ def _emit_flow(key):
         'bytes': flow.bytes,
         'label': res.get('label'),
         'label_name': res.get('label_name', res.get('label', 'Unknown')),
-        'score': float(res.get('score') or 0.0),
+        'score': float(res.get('confidence') or res.get('score') or 0.0),
         'summary': summary_dict,
         'duration_ms': duration_ms,
         'packets_per_sec': packets_per_sec,
         'bytes_per_sec': bytes_per_sec,
         'avg_pkt_size': avg_pkt_size,
+        'model_version': res.get('version'),
+        'model_task': res.get('task'),
     }
 
     # Сохраняем и публикуем
@@ -271,6 +263,7 @@ def _emit_flow(key):
 
     try:
         publish('flow', flow_dict)
+        publish('ml_prediction', res)
     except Exception:
         log.exception("Event publish error")
 
