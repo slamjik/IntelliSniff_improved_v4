@@ -10,7 +10,10 @@ aiofiles
 reportlab
 nfstream
 httpx
+SQLAlchemy>=2.0
+psycopg2-binary
+python-dotenv
+alembic
 
 pytest
 pytest-asyncio
-
