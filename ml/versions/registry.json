@@ -1,23 +1,31 @@
 {
   "attack": {
-    "active": "model_attack_demo.pkl",
+    "active": "user_model_absolute",
     "available": {
       "model_attack_demo.pkl": {
         "path": "models/model_attack_demo.pkl",
-        "created_at": null,
-        "trained_at": null,
+        "created_at": 1762763393.726272,
+        "trained_at": 1762763393.7262728,
         "notes": "Demo attack detection model"
+      },
+      "user_model_absolute": {
+        "path": "C:\\Users\\Olega\\PycharmProjects\\IntelliSniff_improved_v4\\datasets\\model.joblib",
+        "notes": "Absolute path to user model (original file)"
       }
     }
   },
   "vpn": {
-    "active": "model_vpn_demo.pkl",
+    "active": "user_model_absolute",
     "available": {
       "model_vpn_demo.pkl": {
         "path": "models/model_vpn_demo.pkl",
-        "created_at": null,
-        "trained_at": null,
+        "created_at": 1762763393.89658,
+        "trained_at": 1762763393.8965807,
         "notes": "Demo VPN classifier"
+      },
+      "user_model_absolute": {
+        "path": "C:\\Users\\Olega\\PycharmProjects\\IntelliSniff_improved_v4\\datasets\\model.joblib",
+        "notes": "Absolute path to user model (original file)"
       }
     }
   },
@@ -26,8 +34,8 @@
     "available": {
       "model_anomaly_demo.pkl": {
         "path": "models/model_anomaly_demo.pkl",
-        "created_at": null,
-        "trained_at": null,
+        "created_at": 1762763394.077691,
+        "trained_at": 1762763394.0776913,
         "notes": "Demo anomaly detector"
       }
     }

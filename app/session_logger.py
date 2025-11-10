@@ -117,18 +117,29 @@ def cleanup_sessions(*, older_than_days: int = 30) -> int:
         raise SessionLoggerError(f"Failed to cleanup sessions: {exc}") from exc
 
 
-def list_recent_sessions(limit: int = 50) -> Iterable[SessionLog]:
-    """Fetch a limited number of the most recent sessions for inspection."""
+def list_recent_sessions(limit: int = 50) -> list[dict]:
+    """Fetch recent sessions safely (returns plain dicts, not detached ORM)."""
     if limit <= 0:
         raise SessionLoggerError("limit must be positive")
 
     try:
         with session_scope() as db:
-            return (
+            sessions = (
                 db.query(SessionLog)
                 .order_by(SessionLog.started_at.desc())
                 .limit(limit)
                 .all()
             )
+            return [
+                {
+                    "id": s.id,
+                    "user": s.user,
+                    "result": s.result,
+                    "started_at": s.started_at,
+                    "finished_at": s.finished_at,
+                    "details": s.details,
+                }
+                for s in sessions
+            ]
     except SQLAlchemyError as exc:
         raise SessionLoggerError(f"Failed to list sessions: {exc}") from exc
