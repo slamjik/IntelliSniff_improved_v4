@@ -130,7 +130,8 @@ def _derive_numeric_features(base: Mapping[str, object]) -> Dict[str, float]:
 def extract_features(flow: Mapping[str, object],
                      numeric_features: Sequence[str] = NUMERIC_FEATURES_DEFAULT,
                      hash_features: Sequence[str] = HASH_FEATURES,
-                     num_hash_buckets: int = 32) -> FeatureVector:
+                     num_hash_buckets: int = 32,
+                     expected_order: Optional[Sequence[str]] = None) -> FeatureVector:
     """Build a deterministic feature vector from heterogeneous flow data.
 
     Parameters
@@ -144,6 +145,12 @@ def extract_features(flow: Mapping[str, object],
     num_hash_buckets:
         Resolution of hash buckets for categorical features.
     """
+
+    if expected_order:
+        ordered = []
+        for name in expected_order:
+            ordered.append(_safe_float(flow.get(name)))
+        return FeatureVector(names=list(expected_order), values=np.array(ordered, dtype=float))
 
     base_numeric = _derive_numeric_features(flow)
     vector_values: List[float] = []
