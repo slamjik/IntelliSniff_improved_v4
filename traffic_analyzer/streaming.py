@@ -1,4 +1,7 @@
-import logging, math, time, threading
+import logging
+import math
+import time
+import threading
 from collections import namedtuple
 from typing import Dict, Optional
 
@@ -10,9 +13,61 @@ from .event_bus import publish
 log = logging.getLogger('ta.streaming')
 FlowKey = namedtuple('FlowKey', ['src', 'dst', 'sport', 'dport', 'proto'])
 
+
+class _RunningStats:
+    """Simple helper to accumulate statistics without storing raw values."""
+
+    __slots__ = ("count", "_sum", "_sum_sq", "_min", "_max")
+
+    def __init__(self):
+        self.count = 0
+        self._sum = 0.0
+        self._sum_sq = 0.0
+        self._min = None
+        self._max = None
+
+    def update(self, value: float) -> None:
+        value = float(value or 0.0)
+        self.count += 1
+        self._sum += value
+        self._sum_sq += value * value
+        if self._min is None or value < self._min:
+            self._min = value
+        if self._max is None or value > self._max:
+            self._max = value
+
+    @property
+    def total(self) -> float:
+        return self._sum
+
+    @property
+    def mean(self) -> float:
+        if self.count == 0:
+            return 0.0
+        return self._sum / float(self.count)
+
+    @property
+    def variance(self) -> float:
+        if self.count <= 1:
+            return 0.0
+        mean = self.mean
+        return max(0.0, (self._sum_sq / float(self.count)) - mean * mean)
+
+    @property
+    def std(self) -> float:
+        return math.sqrt(self.variance)
+
+    @property
+    def min(self) -> float:
+        return 0.0 if self._min is None else float(self._min)
+
+    @property
+    def max(self) -> float:
+        return 0.0 if self._max is None else float(self._max)
+
 # === Класс потока ============================================================
 class Flow:
-    def __init__(self, ts: float, iface: Optional[str] = None):
+    def __init__(self, ts: float, key: FlowKey, iface: Optional[str] = None):
         ts = float(ts or time.time())
         self.first_ts = ts
         self.last_ts = ts
@@ -20,11 +75,80 @@ class Flow:
         self.bytes = 0
         self.iface = iface or '-'
         self.extra: Dict[str, Optional[str]] = {}
+        self.key = key
 
-    def update(self, ts: float, pkt_len: int, pkt_dict: Dict):
+        # per direction counters
+        self.fwd_packets = 0
+        self.bwd_packets = 0
+        self.fwd_bytes = 0
+        self.bwd_bytes = 0
+
+        # statistics
+        self.packet_stats = _RunningStats()
+        self.fwd_packet_stats = _RunningStats()
+        self.bwd_packet_stats = _RunningStats()
+        self.flow_iat_stats = _RunningStats()
+        self.fwd_iat_stats = _RunningStats()
+        self.bwd_iat_stats = _RunningStats()
+
+        # timestamps for IAT calculations
+        self._prev_ts = None
+        self._prev_fwd_ts = None
+        self._prev_bwd_ts = None
+
+    @property
+    def src(self):
+        return self.key.src
+
+    @property
+    def dst(self):
+        return self.key.dst
+
+    @property
+    def sport(self):
+        return self.key.sport
+
+    @property
+    def dport(self):
+        return self.key.dport
+
+    @property
+    def proto(self):
+        return self.key.proto
+
+    def update(self, ts: float, pkt_len: int, pkt_dict: Dict, is_forward: bool):
         self.last_ts = max(self.last_ts, ts)
+        pkt_len = max(0, int(pkt_len or 0))
+
         self.packets += 1
-        self.bytes += max(0, pkt_len)
+        self.bytes += pkt_len
+
+        # packet length statistics
+        if pkt_len > 0:
+            self.packet_stats.update(pkt_len)
+            if is_forward:
+                self.fwd_packet_stats.update(pkt_len)
+            else:
+                self.bwd_packet_stats.update(pkt_len)
+
+        # direction specific counters
+        if is_forward:
+            self.fwd_packets += 1
+            self.fwd_bytes += pkt_len
+            if self._prev_fwd_ts is not None:
+                self.fwd_iat_stats.update(ts - self._prev_fwd_ts)
+            self._prev_fwd_ts = ts
+        else:
+            self.bwd_packets += 1
+            self.bwd_bytes += pkt_len
+            if self._prev_bwd_ts is not None:
+                self.bwd_iat_stats.update(ts - self._prev_bwd_ts)
+            self._prev_bwd_ts = ts
+
+        # flow-level IAT
+        if self._prev_ts is not None:
+            self.flow_iat_stats.update(ts - self._prev_ts)
+        self._prev_ts = ts
 
         for field in ('tls_sni', 'http_host', 'dns_query'):
             value = pkt_dict.get(field)
@@ -35,11 +159,167 @@ class Flow:
         if pkt_dict.get('iface') and self.iface == '-':
             self.iface = pkt_dict.get('iface')
 
-    def metrics(self) -> Dict[str, float]:
+    def _to_feature_input(self) -> Dict[str, float]:
         duration = max(0.0, self.last_ts - self.first_ts)
-        base = {'duration': duration, 'packets': self.packets, 'bytes': self.bytes}
-        derived = extract_features_from_flow(base)
+        packets = float(self.packets)
+        bytes_total = float(self.bytes)
+
+        def _safe_div(num: float, den: float) -> float:
+            return float(num) / float(den) if den not in (0, 0.0) else 0.0
+
+        pkts_per_s = _safe_div(packets, duration) if duration > 0 else packets
+        bytes_per_s = _safe_div(bytes_total, duration) if duration > 0 else bytes_total
+        avg_pkt_size = _safe_div(bytes_total, packets)
+
+        down_up_ratio = _safe_div(self.bwd_bytes, self.fwd_bytes)
+
+        feature_input = {
+            'protocol': self._proto_to_number(self.proto),
+            'proto': self.proto,
+            'flow_duration': duration,
+            'total_fwd_packets': float(self.fwd_packets),
+            'total_bwd_packets': float(self.bwd_packets),
+            'fwd_packets_length_total': float(self.fwd_bytes),
+            'bwd_packets_length_total': float(self.bwd_bytes),
+            'fwd_packet_length_max': self.fwd_packet_stats.max,
+            'fwd_packet_length_min': self.fwd_packet_stats.min,
+            'fwd_packet_length_mean': self.fwd_packet_stats.mean,
+            'fwd_packet_length_std': self.fwd_packet_stats.std,
+            'bwd_packet_length_max': self.bwd_packet_stats.max,
+            'bwd_packet_length_min': self.bwd_packet_stats.min,
+            'bwd_packet_length_mean': self.bwd_packet_stats.mean,
+            'bwd_packet_length_std': self.bwd_packet_stats.std,
+            'flow_bytes_per_s': bytes_per_s,
+            'flow_packets_per_s': pkts_per_s,
+            'fwd_packets_per_s': _safe_div(self.fwd_packets, duration) if duration > 0 else float(self.fwd_packets),
+            'bwd_packets_per_s': _safe_div(self.bwd_packets, duration) if duration > 0 else float(self.bwd_packets),
+            'flow_iat_mean': self.flow_iat_stats.mean,
+            'flow_iat_std': self.flow_iat_stats.std,
+            'flow_iat_max': self.flow_iat_stats.max,
+            'flow_iat_min': self.flow_iat_stats.min,
+            'fwd_iat_total': self.fwd_iat_stats.total,
+            'fwd_iat_mean': self.fwd_iat_stats.mean,
+            'fwd_iat_std': self.fwd_iat_stats.std,
+            'fwd_iat_max': self.fwd_iat_stats.max,
+            'fwd_iat_min': self.fwd_iat_stats.min,
+            'bwd_iat_total': self.bwd_iat_stats.total,
+            'bwd_iat_mean': self.bwd_iat_stats.mean,
+            'bwd_iat_std': self.bwd_iat_stats.std,
+            'bwd_iat_max': self.bwd_iat_stats.max,
+            'bwd_iat_min': self.bwd_iat_stats.min,
+            'down_up_ratio': down_up_ratio,
+            'packet_length_min': self.packet_stats.min,
+            'packet_length_max': self.packet_stats.max,
+            'packet_length_mean': self.packet_stats.mean,
+            'packet_length_std': self.packet_stats.std,
+            'packet_length_variance': self.packet_stats.variance,
+            'avg_packet_size': avg_pkt_size,
+            'avg_fwd_segment_size': _safe_div(self.fwd_bytes, self.fwd_packets),
+            'avg_bwd_segment_size': _safe_div(self.bwd_bytes, self.bwd_packets),
+            'subflow_fwd_packets': float(self.fwd_packets),
+            'subflow_fwd_bytes': float(self.fwd_bytes),
+            'subflow_bwd_packets': float(self.bwd_packets),
+            'subflow_bwd_bytes': float(self.bwd_bytes),
+            'fwd_seg_size_min': self.fwd_packet_stats.min,
+            'destination_port': float(self.dport or 0),
+            'source_port': float(self.sport or 0),
+            'total_fwd_bytes': float(self.fwd_bytes),
+            'total_backward_bytes': float(self.bwd_bytes),
+            'duration': duration,
+            'total_fiat': self.fwd_iat_stats.total,
+            'total_biat': self.bwd_iat_stats.total,
+            'min_fiat': self.fwd_iat_stats.min,
+            'min_biat': self.bwd_iat_stats.min,
+            'max_fiat': self.fwd_iat_stats.max,
+            'max_biat': self.bwd_iat_stats.max,
+            'mean_fiat': self.fwd_iat_stats.mean,
+            'mean_biat': self.bwd_iat_stats.mean,
+            'flowpktspersecond': pkts_per_s,
+            'flowbytespersecond': bytes_per_s,
+            'min_flowiat': self.flow_iat_stats.min,
+            'max_flowiat': self.flow_iat_stats.max,
+            'mean_flowiat': self.flow_iat_stats.mean,
+            'std_flowiat': self.flow_iat_stats.std,
+            'min_packet_length': self.packet_stats.min,
+            'max_packet_length': self.packet_stats.max,
+            'average_packet_size': avg_pkt_size,
+            'init_win_bytes_forward': 0.0,
+            'init_win_bytes_backward': 0.0,
+            'act_data_pkt_fwd': float(self.fwd_packets),
+            'min_seg_size_forward': self.fwd_packet_stats.min,
+            'packets': packets,
+            'bytes': bytes_total,
+            'pkts_per_s': pkts_per_s,
+            'bytes_per_s': bytes_per_s,
+            'avg_pkt_size': avg_pkt_size,
+        }
+
+        # placeholder values for features we cannot currently derive
+        feature_input.update({
+            'fwd_psh_flags': 0.0,
+            'bwd_psh_flags': 0.0,
+            'fwd_urg_flags': 0.0,
+            'bwd_urg_flags': 0.0,
+            'fwd_header_length': 0.0,
+            'bwd_header_length': 0.0,
+            'fin_flag_count': 0.0,
+            'syn_flag_count': 0.0,
+            'rst_flag_count': 0.0,
+            'psh_flag_count': 0.0,
+            'ack_flag_count': 0.0,
+            'urg_flag_count': 0.0,
+            'cwe_flag_count': 0.0,
+            'ece_flag_count': 0.0,
+            'fwd_avg_bytes_bulk': 0.0,
+            'fwd_avg_packets_bulk': 0.0,
+            'fwd_avg_bulk_rate': 0.0,
+            'bwd_avg_bytes_bulk': 0.0,
+            'bwd_avg_packets_bulk': 0.0,
+            'bwd_avg_bulk_rate': 0.0,
+            'init_fwd_win_bytes': 0.0,
+            'init_bwd_win_bytes': 0.0,
+            'fwd_act_data_packets': float(self.fwd_packets),
+            'active_mean': 0.0,
+            'active_std': 0.0,
+            'active_max': 0.0,
+            'active_min': 0.0,
+            'idle_mean': 0.0,
+            'idle_std': 0.0,
+            'idle_max': 0.0,
+            'idle_min': 0.0,
+            'min_active': 0.0,
+            'mean_active': 0.0,
+            'max_active': 0.0,
+            'std_active': 0.0,
+            'min_idle': 0.0,
+            'mean_idle': 0.0,
+            'max_idle': 0.0,
+            'std_idle': 0.0,
+            'fwd_header_length1': 0.0,
+        })
+
+        return feature_input
+
+    def metrics(self) -> Dict[str, float]:
+        feature_input = self._to_feature_input()
+        derived = extract_features_from_flow(feature_input)
         return {**derived, **self.extra}
+
+    @staticmethod
+    def _proto_to_number(proto: Optional[str]) -> float:
+        if proto is None:
+            return 0.0
+        try:
+            return float(int(proto))
+        except Exception:
+            mapping = {
+                'TCP': 6,
+                'UDP': 17,
+                'ICMP': 1,
+                'ICMPV6': 58,
+                'ARP': 2054,
+            }
+            return float(mapping.get(str(proto).upper(), 0))
 
 
 # === Global State ============================================================
@@ -48,6 +328,24 @@ _lock = threading.Lock()
 _flow_timeout = 30.0
 _stop_event = threading.Event()
 _flush_thread = None
+
+
+def _normalise_flow_key(src, dst, sport, dport, proto):
+    """Return canonical flow key and direction flag for the packet."""
+    def _key_tuple(a, ap, b, bp):
+        return (
+            str(a or ''),
+            int(ap or -1),
+            str(b or ''),
+            int(bp or -1),
+        )
+
+    forward_tuple = _key_tuple(src, sport, dst, dport)
+    backward_tuple = _key_tuple(dst, dport, src, sport)
+    if forward_tuple <= backward_tuple:
+        key = FlowKey(src, dst, sport, dport, proto)
+        return key, True
+    return FlowKey(dst, src, dport, sport, proto), False
 
 
 # === Инициализация потокового анализа =======================================
@@ -176,21 +474,20 @@ def handle_packet(pkt_dict):
     """Обработка пакета, поступающего из capture."""
     try:
         ts = _to_float(pkt_dict.get('ts'), default=time.time())
-        key = FlowKey(
-            _to_str(pkt_dict.get('src')),
-            _to_str(pkt_dict.get('dst')),
-            _to_int(pkt_dict.get('sport')),
-            _to_int(pkt_dict.get('dport')),
-            (_to_str(pkt_dict.get('proto')) or '').upper(),
-        )
+        src = _to_str(pkt_dict.get('src'))
+        dst = _to_str(pkt_dict.get('dst'))
+        sport = _to_int(pkt_dict.get('sport'))
+        dport = _to_int(pkt_dict.get('dport'))
+        proto = (_to_str(pkt_dict.get('proto')) or '').upper()
+        key, is_forward = _normalise_flow_key(src, dst, sport, dport, proto)
         pkt_len = _to_int(pkt_dict.get('length') or pkt_dict.get('bytes'))
 
         with _lock:
             f = _flows.get(key)
             if not f:
-                f = Flow(ts, iface=_to_str(pkt_dict.get('iface')))
+                f = Flow(ts, key, iface=_to_str(pkt_dict.get('iface')))
                 _flows[key] = f
-            f.update(ts, pkt_len, pkt_dict)
+            f.update(ts, pkt_len, pkt_dict, is_forward=is_forward)
     except Exception:
         log.exception("Error in handle_packet")
 

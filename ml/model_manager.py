@@ -235,7 +235,10 @@ class ModelManager:
         task = task.lower()
         model, feature_names = self._load_model(task)
         info = self.get_active_model_info(task)
-        feature_vector = extract_features(raw_features)
+        feature_vector = extract_features(
+            raw_features,
+            expected_order=feature_names if feature_names else None,
+        )
         feature_vector = ensure_feature_order(feature_vector, feature_names)
         inputs = feature_vector.values.reshape(1, -1)
         probs = None

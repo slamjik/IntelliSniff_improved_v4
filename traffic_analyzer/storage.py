@@ -157,9 +157,18 @@ class Storage:
             limit = 100
         limit = max(1, min(limit, 1000))
         with self._conn() as c:
-            cur = c.execute('SELECT ts,iface,src,dst,sport,dport,proto,packets,bytes,label,label_name,score,summary FROM flows ORDER BY ts DESC LIMIT ?', (limit,))
+            cur = c.execute(
+                'SELECT ts,iface,src,dst,sport,dport,proto,packets,bytes,label,label_name,score,summary ' 
+                'FROM flows ORDER BY ts DESC LIMIT ?',
+                (limit,),
+            )
             rows = cur.fetchall()
             cols = ['ts','iface','src','dst','sport','dport','proto','packets','bytes','label','label_name','score','summary']
             return [dict(zip(cols, r)) for r in rows]
 
 storage = Storage()
+
+
+def recent(limit: int = 100):
+    """Convenience proxy returning recent flows from the default storage."""
+    return storage.recent(limit=limit)
