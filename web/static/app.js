@@ -417,11 +417,18 @@ async function loadMlDashboard() {
       apiFetch('/drift_status'),
       apiFetch('/ml/predictions?limit=50'),
     ]);
+    const tasks = state.ml.tasks;
     const versionsResponses = await Promise.all(
-      state.ml.tasks.map((task) => apiFetch(`/get_versions?task=${task}`))
+      tasks.map((task) => apiFetch(`/get_versions?task=${task}`))
     );
-    versionsResponses.forEach((resp) => {
-      if (resp && resp.task) {
+
+    versionsResponses.forEach((resp, idx) => {
+      const task = tasks[idx];
+      if (Array.isArray(resp)) {
+        // Новый формат API: просто массив версий
+        state.ml.versions[task] = resp;
+      } else if (resp && resp.task) {
+        // Старый формат: {task, versions}
         state.ml.versions[resp.task] = resp.versions || [];
       }
     });
