@@ -41,21 +41,22 @@ class StartCaptureRequest(BaseModel):
 class TrainRequest(BaseModel):
     demo: bool = Field(default=True, description="Использовать демонстрационный датасет")
 
+
 class PredictRequest(BaseModel):
-    task: str = Field(default='attack', description='ML task (attack/vpn/anomaly)')
+    task: str = Field(default="attack", description="ML task (attack/vpn/anomaly)")
     features: dict = Field(default_factory=dict)
-    metadata: Optional[dict] = Field(default=None, description='Optional context information')
+    metadata: Optional[dict] = Field(default=None, description="Optional context information")
 
 
 class SwitchModelRequest(BaseModel):
-    task: str = Field(default='attack')
-    version: str = Field(..., description='Version identifier from registry.json')
+    task: str = Field(default="attack")
+    version: str = Field(..., description="Version identifier (numeric)")
 
 
 class ValidationRequest(BaseModel):
-    task: str = Field(default='attack')
-    version: str = Field(..., description='Filename of the candidate model in ml/models')
-    dataset: Optional[str] = Field(default=None, description='Optional path to dataset for validation')
+    task: str = Field(default="attack")
+    version: str = Field(..., description="Filename or version of candidate model")
+    dataset: Optional[str] = Field(default=None, description="Optional path to dataset for validation")
 
 
 class AutoUpdateToggleRequest(BaseModel):
@@ -79,8 +80,10 @@ static_dir = os.path.join(os.path.dirname(__file__), "..", "web", "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+# ==========================
+#  WebSocket
+# ==========================
 
-# WebSocket clients set
 _ws_clients_lock = threading.Lock()
 _ws_clients: Set[WebSocket] = set()
 
@@ -89,15 +92,12 @@ async def _broker_loop():
     q = event_bus.get_queue()
     loop = asyncio.get_event_loop()
     while True:
-        # blocking get in threadpool to avoid blocking event loop
         item = await loop.run_in_executor(None, q.get)
         try:
             topic, payload = item
         except Exception:
             continue
-        # prepare JSONable payload
         msg = {"topic": topic, "data": payload}
-        # broadcast to clients
         to_remove = []
         with _ws_clients_lock:
             clients = list(_ws_clients)
@@ -105,7 +105,6 @@ async def _broker_loop():
             try:
                 await ws.send_json(msg)
             except Exception:
-                # mark for removal
                 to_remove.append(ws)
         if to_remove:
             with _ws_clients_lock:
@@ -116,9 +115,12 @@ async def _broker_loop():
 
 @app.on_event("startup")
 async def startup_event():
-    # start broker loop task
     asyncio.create_task(_broker_loop())
 
+
+# ==========================
+#  Базовые эндпоинты
+# ==========================
 
 @app.get("/health")
 def health() -> dict:
@@ -150,9 +152,9 @@ def api_stop(user: str = Depends(get_current_username)):
 
 @app.post("/train_model")
 def api_train(
-    background_tasks: BackgroundTasks,
-    payload: TrainRequest,
-    user: str = Depends(get_current_username),
+        background_tasks: BackgroundTasks,
+        payload: TrainRequest,
+        user: str = Depends(get_current_username),
 ):
     def _train():
         try:
@@ -173,66 +175,124 @@ def api_train(
 def api_status(user: str = Depends(get_current_username)):
     return capture.get_status()
 
-@app.post('/predict')
+
+# ==========================
+#  ML: предсказания
+# ==========================
+
+@app.post("/predict")
 def api_predict(payload: PredictRequest, user: str = Depends(get_current_username)):
     return predictor.predict(payload.features, task=payload.task, metadata=payload.metadata)
 
 
-@app.post('/switch_model')
+# ==========================
+#  ML: модели / версии / метрики
+# ==========================
+
+@app.post("/switch_model")
 def api_switch_model(payload: SwitchModelRequest, user: str = Depends(get_current_username)):
-    info = model_manager.switch_model(payload.task, payload.version)
-    return info
+    """
+    Переключение активной версии модели для задачи (attack/vpn).
+    Фронт шлёт {task, version}, версию приводим к int.
+    """
+    version_int = int(payload.version)
+    model_manager.set_active_model(payload.task, version_int)
+    return {"status": "ok", "task": payload.task, "active_version": version_int}
 
 
-@app.get('/get_versions')
-def api_get_versions(task: str = Query('attack'), user: str = Depends(get_current_username)):
-    return {'task': task, 'versions': model_manager.get_versions(task)}
+@app.get("/get_versions")
+def api_get_versions(task: str = Query("attack"), user: str = Depends(get_current_username)):
+    """
+    Фронт ожидает:
+    [
+      { "version": 1, "active": true },
+      { "version": 2, "active": false }
+    ]
+    """
+
+    # получаем ModelInfo через менеджер
+    versions = model_manager.get_versions(task)  # список ModelInfo
+    active = model_manager.get_active_model_info(task)
+
+    formatted = []
+    for v in versions:
+        formatted.append({
+            "version": v.version,
+            "active": (active.version == v.version)
+        })
+
+    # UI ждёт МАССИВ, а не {"task": "...", "versions": [...]}
+    return formatted
 
 
-@app.get('/model_status')
+@app.get("/model_status")
 def api_model_status(user: str = Depends(get_current_username)):
+    """
+    Статус активных моделей по задачам.
+    Возвращает:
+      {
+        "attack": {"version": 1, "file": "..."},
+        "vpn":    {"version": 1, "file": "..."}
+      }
+    """
     data = {}
-    for task in model_manager.list_tasks():
+    tasks = getattr(model_manager, "TASKS", ["attack", "vpn"])
+    for task in tasks:
         info = model_manager.get_active_model_info(task)
-        data[task] = info.to_dict() if info else None
+        data[task] = info  # info уже dict (version, file)
     return data
 
 
-@app.get('/drift_status')
+@app.get("/drift_status")
 def api_drift_status(user: str = Depends(get_current_username)):
     return drift_detector.get_status()
 
 
-@app.get('/ml/predictions')
-def api_ml_predictions(limit: int = Query(50, ge=1, le=500), user: str = Depends(get_current_username)):
+@app.get("/ml/predictions")
+def api_ml_predictions(
+        limit: int = Query(50, ge=1, le=500),
+        user: str = Depends(get_current_username),
+):
     data = predictor.get_buffer()
-    return {'items': list(reversed(data[-limit:]))}
+    return {"items": list(reversed(data[-limit:]))}
 
 
-@app.post('/trigger_validation')
+@app.post("/trigger_validation")
 def api_trigger_validation(payload: ValidationRequest, user: str = Depends(get_current_username)):
+    # auto_updater сам решает, что делать с этой версией
     return auto_updater.validate_and_maybe_activate(payload.task, payload.version, payload.dataset)
 
 
-@app.post('/auto_update_toggle')
+@app.post("/auto_update_toggle")
 def api_toggle_auto_update(payload: AutoUpdateToggleRequest, user: str = Depends(get_current_username)):
     auto_updater.toggle(payload.enabled)
-    return {'enabled': auto_updater.enabled}
+    return {"enabled": auto_updater.enabled}
 
 
-@app.get('/quality_metrics')
+@app.get("/quality_metrics")
 def api_quality_metrics(user: str = Depends(get_current_username)):
+    """
+    Сейчас фронт кладёт это в state.ml.metrics, но для отображения метрик
+    в карточке он всё равно берёт metric_* из объектов версий (get_versions).
+
+    Поэтому здесь можно вернуть просто список версий по задачам,
+    чтобы не ломать совместимость.
+    """
     summary = {}
-    for task in model_manager.list_tasks():
-        versions = model_manager.get_versions(task)
-        summary[task] = versions
+    tasks = getattr(model_manager, "TASKS", ["attack", "vpn"])
+    for task in tasks:
+        summary[task] = model_manager.available_versions.get(task, [])
     return summary
 
 
-@app.get('/auto_update_status')
+@app.get("/auto_update_status")
 def api_auto_update_status(user: str = Depends(get_current_username)):
-    return {'enabled': auto_updater.enabled}
+    return {"enabled": auto_updater.enabled}
 
+
+# ==========================
+#  Интерфейсы / отчёты / flows
+# ==========================
 
 @app.get("/interfaces")
 def api_interfaces(user: str = Depends(get_current_username)):
@@ -253,7 +313,6 @@ def _parse_summary(summary_value):
         try:
             return json.loads(summary_value)
         except json.JSONDecodeError:
-            # попытка распарсить строковое представление dict от Python
             try:
                 return json.loads(summary_value.replace("'", '"'))
             except Exception:
@@ -263,13 +322,12 @@ def _parse_summary(summary_value):
 
 @app.get("/flows/recent")
 def api_recent_flows(
-    limit: int = Query(100, ge=1, le=1000),
-    user: str = Depends(get_current_username),
+        limit: int = Query(100, ge=1, le=1000),
+        user: str = Depends(get_current_username),
 ):
     rows = storage.recent(limit=limit)
     for row in rows:
         row["summary"] = _parse_summary(row.get("summary"))
-        # нормализуем ts в миллисекундах
         if row.get("ts") and row["ts"] < 10_000_000_000:
             row["ts"] = int(row["ts"] * 1000)
     return {"items": rows, "count": len(rows)}
@@ -341,6 +399,10 @@ def report_pdf(user: str = Depends(get_current_username)):
     )
 
 
+# ==========================
+#  WebSocket live
+# ==========================
+
 @app.websocket("/ws/live")
 async def ws_live(ws: WebSocket):
     await ws.accept()
@@ -348,7 +410,6 @@ async def ws_live(ws: WebSocket):
         _ws_clients.add(ws)
     try:
         while True:
-            # keep connection open; client may send pings
             await ws.receive_text()
     except WebSocketDisconnect:
         with _ws_clients_lock:

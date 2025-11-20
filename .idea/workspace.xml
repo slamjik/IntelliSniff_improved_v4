@@ -4,18 +4,32 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/test_session_logger.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/traffic_analyzer/inspect_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+    <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="Да">
+      <change afterPath="$PROJECT_DIR$/app/test_log.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/view_sessions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/debug_features_pipeline.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspect_model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspect_model_features.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ml/convert_dataset_snakecase.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ml/data/features.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ml/test_attack_model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ml/test_attack_model_realistic.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ml/test_models_real_flows.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ml/train_vpn_model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/traffic_analyzer/ml_debug.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/traffic_analyzer/parq.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/session_logger.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/session_logger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml/data/live_buffer.json" beforeDir="false" afterPath="$PROJECT_DIR$/ml/data/live_buffer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml/data/training_candidates.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ml/data/training_candidates.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml/versions/registry.json" beforeDir="false" afterPath="$PROJECT_DIR$/ml/versions/registry.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/classification.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/classification.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml/inference.py" beforeDir="false" afterPath="$PROJECT_DIR$/ml/inference.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml/model_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/ml/model_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/capture.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/traffic_analyzer/features.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/features.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/traffic_analyzer/ml_runtime.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/ml_runtime.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/streaming.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/streaming.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/traffic_analyzer/train_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/train_model.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,20 +70,115 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python tests.Python tests in test_attack_model.py.executor": "Run",
+    "Python tests.Python tests in test_log.py.executor": "Run",
     "Python tests.Python tests in test_model_performance.py.executor": "Run",
     "Python tests.Python tests in test_session_logger.py.executor": "Run",
     "Python.convert.executor": "Run",
     "Python.dataset_preprocessor.executor": "Run",
+    "Python.debug_features_pipeline.executor": "Run",
+    "Python.inspect_model (1).executor": "Run",
     "Python.inspect_model.executor": "Run",
+    "Python.parq.executor": "Run",
     "Python.train_model.executor": "Run",
+    "Python.view_sessions.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "#10 on codex-19vk1e"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.inspect_model">
-    <configuration name="dataset_preprocessor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python tests.Python tests in test_attack_model.py">
+    <configuration name="Unnamed" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="IntelliSniff_improved_v4" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.13 (IntelliSniff_improved_v4)" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="debug_features_pipeline" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="IntelliSniff_improved_v4" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/debug_features_pipeline.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="inspect_model (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="IntelliSniff_improved_v4" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/inspect_model.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="inspect_model_features" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="IntelliSniff_improved_v4" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/inspect_model_features.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="parq" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="IntelliSniff_improved_v4" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -82,7 +191,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/traffic_analyzer/dataset_preprocessor.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/traffic_analyzer/parq.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -91,51 +200,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="inspect_model" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="IntelliSniff_improved_v4" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/traffic_analyzer" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/traffic_analyzer/inspect_model.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="train_model" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="IntelliSniff_improved_v4" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/traffic_analyzer" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/traffic_analyzer/train_model.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests in test_model_performance.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests in test_attack_model.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="IntelliSniff_improved_v4" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -146,32 +211,25 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;$PROJECT_DIR$/traffic_analyzer/test_model_performance.py&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/ml/test_attack_model.py&quot;" />
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests in test_session_logger.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="IntelliSniff_improved_v4" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;$PROJECT_DIR$/test_session_logger.py&quot;" />
-      <option name="_new_targetType" value="&quot;PATH&quot;" />
-      <method v="2" />
-    </configuration>
+    <list>
+      <item itemvalue="Python.Unnamed" />
+      <item itemvalue="Python.debug_features_pipeline" />
+      <item itemvalue="Python.inspect_model (1)" />
+      <item itemvalue="Python.inspect_model_features" />
+      <item itemvalue="Python.parq" />
+      <item itemvalue="Python tests.Python tests in test_attack_model.py" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.inspect_model" />
-        <item itemvalue="Python tests.Python tests in test_session_logger.py" />
-        <item itemvalue="Python tests.Python tests in test_model_performance.py" />
-        <item itemvalue="Python.train_model" />
-        <item itemvalue="Python.dataset_preprocessor" />
+        <item itemvalue="Python tests.Python tests in test_attack_model.py" />
+        <item itemvalue="Python.parq" />
+        <item itemvalue="Python.inspect_model_features" />
+        <item itemvalue="Python.inspect_model (1)" />
+        <item itemvalue="Python.debug_features_pipeline" />
       </list>
     </recent_temporary>
   </component>
@@ -190,6 +248,15 @@
       <option name="presentableId" value="Default" />
       <updated>1759036774673</updated>
     </task>
+    <task id="LOCAL-00001" summary="Да">
+      <option name="closed" value="true" />
+      <created>1762769255859</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1762769255859</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -214,5 +281,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Да" />
+    <option name="LAST_COMMIT_MESSAGE" value="Да" />
   </component>
 </project>

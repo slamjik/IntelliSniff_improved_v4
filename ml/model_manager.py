@@ -1,322 +1,218 @@
-"""Model registry and lifecycle management for IntelliSniff."""
-from __future__ import annotations
-
 import json
-import logging
-import threading
-import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional
-
+import logging
 import joblib
-import numpy as np
-
-from traffic_analyzer.classification import (
-    load_model as legacy_load_model,
-    resolve_label_name,
-    train_demo_model,
-)
-from utils.feature_engineering import HASH_FEATURES, NUMERIC_FEATURES_DEFAULT, ensure_feature_order, extract_features
+import re
 
 log = logging.getLogger("ml.model_manager")
 
-SUPPORTED_TASKS = ("attack", "vpn", "anomaly")
 
+# ==============================================================
+#   ОБЪЕКТНАЯ ОБЁРТКА ДЛЯ active модели
+# ==============================================================
 
-@dataclass
 class ModelInfo:
-    task: str
-    version: str
-    path: Path
-    feature_names: List[str]
-    created_at: Optional[float]
-    trained_at: Optional[float]
-    notes: Optional[str] = None
+    def __init__(self, version: int, file: str, features: list):
+        self.version = version
+        self.file = file
+        self.feature_names = features
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self):
         return {
-            "task": self.task,
             "version": self.version,
-            "path": str(self.path),
+            "file": self.file,
             "feature_names": self.feature_names,
-            "created_at": self.created_at,
-            "trained_at": self.trained_at,
-            "notes": self.notes,
         }
 
+
+# ==============================================================
+#   MODEL MANAGER (главный менеджер моделей)
+# ==============================================================
 
 class ModelManager:
-    """Loads, caches and switches models across different detection tasks."""
+    """
+    Полный рабочий менеджер моделей:
+      ✔ читает registry
+      ✔ ищет файлы attack_model_X.joblib / vpn_model_X.joblib
+      ✔ загружает sklearn model + features
+      ✔ отдаёт ModelInfo вместо голого dict
+      ✔ совместим с inference.py, api.py, UI
+    """
 
-    def __init__(self, base_dir: Optional[str] = None):
-        self.base_dir = Path(base_dir or Path(__file__).resolve().parent)
-        self.models_dir = self.base_dir / "models"
-        self.versions_dir = self.base_dir / "versions"
-        self.registry_path = self.versions_dir / "registry.json"
-        self.metrics_path = self.versions_dir / "metrics.json"
-        self.models_dir.mkdir(parents=True, exist_ok=True)
-        self.versions_dir.mkdir(parents=True, exist_ok=True)
+    TASKS = ["attack", "vpn"]
 
-        self._registry = self._load_registry()
-        self._metrics = self._load_metrics()
-        self._cache: Dict[tuple[str, str], object] = {}
-        self._feature_cache: Dict[tuple[str, str], List[str]] = {}
-        self._lock = threading.RLock()
-        self._ensure_demo_models()
+    def __init__(self, base_dir: Path):
+        self.base_dir = Path(base_dir)              # ml/
+        self.data_dir = self.base_dir / "data"      # ml/data/
+        self.registry_path = self.data_dir / "model_registry.json"
 
-    # ------------------------------------------------------------------
-    # Registry helpers
-    def _load_registry(self) -> Dict[str, Dict[str, object]]:
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Файл для DriftDetector
+        self.metrics_path = self.data_dir / "metrics.json"
+
+        # Загружаем registry
+        self.registry = self._load_registry()
+
+        # Ищем модели
+        self._discover_models()
+
+        # Сохраняем registry обратно
+        self._save_registry()
+
+    # ==============================================================
+    #   ЗАГРУЗКА / СОХРАНЕНИЕ registry
+    # ==============================================================
+
+    def _load_registry(self):
+        """Загружаем JSON или создаём пустую структуру."""
         if not self.registry_path.exists():
-            return {}
-        try:
-            return json.loads(self.registry_path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            log.error("Failed to load registry: %s", exc)
-            return {}
+            log.info("📄 Создаю новый model_registry.json")
 
-    def _load_metrics(self) -> Dict[str, Dict[str, object]]:
-        if not self.metrics_path.exists():
-            return {}
-        try:
-            return json.loads(self.metrics_path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            log.error("Failed to load metrics: %s", exc)
-            return {}
-
-    def _write_registry(self) -> None:
-        self.registry_path.write_text(json.dumps(self._registry, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    def _write_metrics(self) -> None:
-        self.metrics_path.write_text(json.dumps(self._metrics, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    def _ensure_task_section(self, task: str) -> Dict[str, object]:
-        task = task.lower()
-        if task not in self._registry:
-            self._registry[task] = {"active": None, "available": {}}
-        return self._registry[task]
-
-    def list_tasks(self) -> List[str]:
-        return sorted(set(self._registry.keys()) | set(SUPPORTED_TASKS))
-
-    # ------------------------------------------------------------------
-    def _ensure_demo_models(self) -> None:
-        """Create demo models if registry references files that do not exist."""
-        for task in SUPPORTED_TASKS:
-            section = self._ensure_task_section(task)
-            active = section.get("active")
-            available = section.setdefault("available", {})
-            if not available and active:
-                available[active] = {"path": f"models/{active}"}
-            if not section.get("active"):
-                demo_name = f"model_{task}_demo.pkl"
-                section["active"] = demo_name
-                available.setdefault(demo_name, {"path": f"models/{demo_name}"})
-            # create file if missing
-            info = available.get(section["active"])
-            if not info:
-                continue
-            path = self.base_dir / info.get("path", f"models/{section['active']}")
-            if path.exists():
-                continue
-            try:
-                if task == "attack":
-                    train_demo_model(str(path))
-                else:
-                    self._create_synthetic_model(path, task)
-                info["created_at"] = info.get("created_at") or time.time()
-                info["trained_at"] = info.get("trained_at") or time.time()
-            except Exception as exc:
-                log.warning("Unable to create demo model for %s: %s", task, exc)
-        self._write_registry()
-
-    def _create_synthetic_model(self, path: Path, task: str) -> None:
-        from sklearn.ensemble import RandomForestClassifier
-
-        rng = np.random.default_rng(42)
-        numeric = len(NUMERIC_FEATURES_DEFAULT)
-        hashed = len(HASH_FEATURES)
-        feature_names = list(NUMERIC_FEATURES_DEFAULT) + [f"hash_{name}" for name in HASH_FEATURES]
-        X = rng.normal(size=(500, numeric))
-        hash_values = rng.random(size=(500, hashed))
-        features = np.hstack([X, hash_values])
-        if task == "vpn":
-            y = (features[:, 0] * 0.6 + features[:, 3] * 0.3 + features[:, -2] > 0.5).astype(int)
-        else:  # anomaly
-            y = (np.abs(features[:, 1]) + features[:, 4] * 0.4 + features[:, -1] > 1.2).astype(int)
-        clf = RandomForestClassifier(n_estimators=120, random_state=42)
-        clf.fit(features, y)
-        joblib.dump({
-            "model": clf,
-            "features": feature_names,
-            "trained_at": time.time(),
-            "task": task,
-        }, path)
-
-    # ------------------------------------------------------------------
-    def _resolve_model_path(self, task: str, version: Optional[str] = None) -> Optional[Path]:
-        task = task.lower()
-        section = self._ensure_task_section(task)
-        version = version or section.get("active")
-        if not version:
-            return None
-        info = section.get("available", {}).get(version)
-        if info is None:
-            return None
-        rel_path = info.get("path") or f"models/{version}"
-        return (self.base_dir / rel_path).resolve()
-
-    def _load_model(self, task: str, version: Optional[str] = None) -> tuple[object, List[str]]:
-        with self._lock:
-            version = version or self._ensure_task_section(task).get("active")
-            cache_key = (task, version)
-            if cache_key in self._cache:
-                return self._cache[cache_key], self._feature_cache.get(cache_key, [])
-            path = self._resolve_model_path(task, version)
-            if path and path.exists():
-                obj = joblib.load(path)
-                model = obj.get("model") if isinstance(obj, dict) else obj
-                features = None
-                for key in ("features", "feature_names", "columns"):
-                    if isinstance(obj, dict) and key in obj:
-                        features = list(obj[key])
-                        break
-                self._cache[cache_key] = model
-                self._feature_cache[cache_key] = features or []
-                return model, self._feature_cache[cache_key]
-            # fallback to legacy model
-            legacy_model, legacy_features = legacy_load_model()
-            self._cache[cache_key] = legacy_model
-            self._feature_cache[cache_key] = list(legacy_features or [])
-            return legacy_model, self._feature_cache[cache_key]
-
-    # ------------------------------------------------------------------
-    def get_versions(self, task: str) -> List[Dict[str, object]]:
-        task = task.lower()
-        section = self._ensure_task_section(task)
-        available = section.get("available", {})
-        items = []
-        metrics = self._metrics.get(task, {})
-        for version, meta in available.items():
-            info = {
-                "version": version,
-                "path": meta.get("path"),
-                "created_at": meta.get("created_at"),
-                "trained_at": meta.get("trained_at"),
-                "notes": meta.get("notes"),
-                "active": version == section.get("active"),
+            return {
+                task: {
+                    "active": None,
+                    "versions": []
+                }
+                for task in self.TASKS
             }
-            info.update({f"metric_{k}": v for k, v in metrics.get(version, {}).items()})
-            items.append(info)
-        return sorted(items, key=lambda x: x["version"])
 
-    def get_active_model_info(self, task: str) -> Optional[ModelInfo]:
-        task = task.lower()
-        section = self._ensure_task_section(task)
-        version = section.get("active")
-        if not version:
+        try:
+            with open(self.registry_path, "r", encoding="utf-8") as f:
+                reg = json.load(f)
+
+            # гарантируем структуру
+            for task in self.TASKS:
+                reg.setdefault(task, {})
+                reg[task].setdefault("active", None)
+                reg[task].setdefault("versions", [])
+
+            return reg
+
+        except Exception as ex:
+            log.error("❌ Ошибка чтения registry: %s", ex)
+            return {
+                task: {"active": None, "versions": []}
+                for task in self.TASKS
+            }
+
+    def _save_registry(self):
+        """Сохраняем registry.json"""
+        try:
+            with open(self.registry_path, "w", encoding="utf-8") as f:
+                json.dump(self.registry, f, ensure_ascii=False, indent=2)
+        except Exception as ex:
+            log.error("❌ Не удалось сохранить registry: %s", ex)
+
+    # ==============================================================
+    #   АВТО-ПОИСК МОДЕЛЕЙ
+    # ==============================================================
+
+    def _discover_models(self):
+        """
+        Ищет файлы вида:
+            attack_model_1.joblib
+            vpn_model_1.joblib
+        и автоматически регистрирует.
+        """
+        for task in self.TASKS:
+            pattern = f"{task}_model_*.joblib"
+            files = list(self.data_dir.glob(pattern))
+
+            if not files:
+                log.warning(f"⚠️ Моделей не найдено для '{task}'")
+                continue
+
+            versions = []
+
+            for f in files:
+                m = re.search(rf"{task}_model_(\d+)\.joblib$", f.name)
+                if not m:
+                    continue
+
+                version = int(m.group(1))
+
+                versions.append({
+                    "version": version,
+                    "file": str(f),
+                })
+
+            versions_sorted = sorted(versions, key=lambda x: x["version"])
+
+            self.registry[task]["versions"] = versions_sorted
+            self.registry[task]["active"] = versions_sorted[-1]
+
+            log.info(f"🧩 {task}: найдено моделей {len(versions_sorted)}, активная → v{versions_sorted[-1]['version']}")
+
+    # ==============================================================
+    #   ЗАГРУЗКА ACTIVE МОДЕЛИ
+    # ==============================================================
+
+    def get_active_model_info(self, task: str):
+        """
+        Возвращает ИМЕННО ModelInfo — не dict.
+        Это нужно inference.py и predictor.
+        """
+        reg = self.registry.get(task)
+        if not reg:
             return None
-        path = self._resolve_model_path(task, version)
-        model, features = self._load_model(task, version)
-        meta = section.get("available", {}).get(version, {})
+
+        active = reg["active"]
+        if not active:
+            return None
+
+        file = active["file"]
+        version = active["version"]
+
+        # загружаем joblib
+        bundle = joblib.load(file)
+
+        # bundle содержит:
+        #   model
+        #   features
+        #   trained_at
+        features = bundle.get("features")
+
         return ModelInfo(
-            task=task,
             version=version,
-            path=path or Path(""),
-            feature_names=features,
-            created_at=meta.get("created_at"),
-            trained_at=meta.get("trained_at"),
-            notes=meta.get("notes"),
+            file=file,
+            features=features
         )
 
-    # ------------------------------------------------------------------
-    def predict(self, raw_features: Mapping[str, object], task: str) -> Dict[str, object]:
-        task = task.lower()
-        model, feature_names = self._load_model(task)
-        info = self.get_active_model_info(task)
-        feature_vector = extract_features(
-            raw_features,
-            expected_order=feature_names if feature_names else None,
-        )
-        feature_vector = ensure_feature_order(feature_vector, feature_names)
-        inputs = feature_vector.values.reshape(1, -1)
-        probs = None
-        try:
-            proba = getattr(model, "predict_proba", None)
-            if callable(proba):
-                probs = proba(inputs)[0]
-                classes = getattr(model, "classes_", list(range(len(probs))))
-                idx = int(np.argmax(probs))
-                label = classes[idx]
-                confidence = float(probs[idx])
-            else:
-                preds = model.predict(inputs)
-                label = preds[0]
-                confidence = 1.0
-        except Exception as exc:
-            log.exception("Prediction failed for task %s: %s", task, exc)
-            label = "error"
-            confidence = 0.0
+    # ==============================================================
+    #   ЗАГРУЗКА ОБЪЕКТА SKLEARN МОДЕЛИ
+    # ==============================================================
 
-        label_name = resolve_label_name(label) if label is not None else "Unknown"
-        result = {
-            "task": task,
-            "label": label if label is None else str(label),
-            "label_name": label_name,
-            "confidence": float(confidence),
-            "score": float(confidence),
-            "version": info.version if info else None,
-            "feature_vector": feature_vector.as_dict(),
+    def _load_model_object(self, task: str, version: int):
+        for v in self.registry[task]["versions"]:
+            if v["version"] == version:
+                bundle = joblib.load(v["file"])
+                return bundle["model"]
+
+        raise ValueError(f"❌ Модель {task} версии v{version} не найдена!")
+
+    # ==============================================================
+    #   ПЕРЕКЛЮЧЕНИЕ МОДЕЛЕЙ
+    # ==============================================================
+
+    def set_active_model(self, task: str, version: int):
+        """Назначает активную модель."""
+        for v in self.registry[task]["versions"]:
+            if v["version"] == version:
+                self.registry[task]["active"] = v
+                self._save_registry()
+                log.info(f"🔄 Активная модель {task} → v{version}")
+                return True
+
+        raise ValueError(f"❌ Нет модели {task} v{version}")
+
+    # ==============================================================
+    #   ДОСТУПНЫЕ ВЕРСИИ (для UI)
+    # ==============================================================
+
+    @property
+    def available_versions(self):
+        return {
+            task: [v["version"] for v in self.registry[task]["versions"]]
+            for task in self.TASKS
         }
-        if probs is not None:
-            result["probabilities"] = {
-                str(cls): float(prob) for cls, prob in zip(getattr(model, "classes_", []), probs)
-            }
-        return result
-
-    # ------------------------------------------------------------------
-    def switch_model(self, task: str, version: str) -> Dict[str, object]:
-        task = task.lower()
-        with self._lock:
-            section = self._ensure_task_section(task)
-            if version not in section.get("available", {}):
-                raise ValueError(f"Version {version} not registered for task {task}")
-            section["active"] = version
-            # purge cache so new model loads on next prediction
-            for key in list(self._cache.keys()):
-                if key[0] == task:
-                    self._cache.pop(key, None)
-                    self._feature_cache.pop(key, None)
-            self._write_registry()
-        log.info("Activated model %s for task %s", version, task)
-        info = self.get_active_model_info(task)
-        return info.to_dict() if info else {"task": task, "version": version}
-
-    def register_model(self, task: str, version: str, path: str, metadata: Optional[Dict[str, object]] = None) -> None:
-        task = task.lower()
-        metadata = metadata or {}
-        with self._lock:
-            section = self._ensure_task_section(task)
-            available = section.setdefault("available", {})
-            entry = available.setdefault(version, {})
-            entry.update(metadata)
-            entry["path"] = path
-            entry.setdefault("created_at", time.time())
-            self._write_registry()
-
-    def update_metrics(self, task: str, version: str, metrics: Mapping[str, object]) -> None:
-        task = task.lower()
-        with self._lock:
-            task_metrics = self._metrics.setdefault(task, {})
-            task_metrics[version] = dict(metrics)
-            self._write_metrics()
-    def get_metrics(self, task: str, version: Optional[str] = None) -> Dict[str, object]:
-        task = task.lower()
-        task_metrics = self._metrics.get(task, {})
-        if version:
-            return dict(task_metrics.get(version, {}))
-        section = self._ensure_task_section(task)
-        active = section.get("active")
-        return dict(task_metrics.get(active, {}))
-
