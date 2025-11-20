@@ -408,33 +408,147 @@ async function loadInitialData() {
   }
 }
 
-async function loadMlDashboard() {
-  try {
-    const [status, quality, autoUpdate, drift, predictions] = await Promise.all([
-      apiFetch('/model_status'),
-      apiFetch('/quality_metrics'),
-      apiFetch('/auto_update_status'),
-      apiFetch('/drift_status'),
-      apiFetch('/ml/predictions?limit=50'),
-    ]);
-    const versionsResponses = await Promise.all(
-      state.ml.tasks.map((task) => apiFetch(`/get_versions?task=${task}`))
-    );
-    versionsResponses.forEach((resp) => {
-      if (resp && resp.task) {
-        state.ml.versions[resp.task] = resp.versions || [];
+function normalizeMetricFields(source) {
+  const map = {
+    metric_precision: 'metric_precision',
+    precision: 'metric_precision',
+    metric_recall: 'metric_recall',
+    recall: 'metric_recall',
+    metric_f1: 'metric_f1',
+    f1: 'metric_f1',
+    metric_drift_resilience: 'metric_drift_resilience',
+    drift_resilience: 'metric_drift_resilience',
+  };
+  const normalized = {};
+  Object.entries(map).forEach(([key, target]) => {
+    const value = source?.[key];
+    if (value !== undefined && value !== null && !Number.isNaN(Number(value))) {
+      normalized[target] = Number(value);
+    }
+  });
+  return normalized;
+}
+
+function normalizeVersionEntry(entry) {
+  if (entry === null || entry === undefined) return null;
+  const rawVersion =
+    typeof entry === 'object' && !Array.isArray(entry)
+      ? entry.version ?? entry.id ?? entry
+      : entry;
+  const versionNumber = Number(rawVersion);
+  const version = Number.isNaN(versionNumber) ? rawVersion : versionNumber;
+  return {
+    version,
+    active: Boolean(entry && entry.active),
+    ...normalizeMetricFields(entry || {}),
+  };
+}
+
+function normalizeQualityMetrics(entry) {
+  if (!entry) return [];
+  if (Array.isArray(entry)) return entry;
+  if (entry && Array.isArray(entry.versions)) return entry.versions;
+  if (typeof entry === 'object') {
+    return Object.keys(entry).map((key) => {
+      const payload = entry[key];
+      if (payload && typeof payload === 'object' && payload.version === undefined) {
+        const versionNumber = Number(key);
+        return { version: Number.isNaN(versionNumber) ? key : versionNumber, ...payload };
       }
+      return payload;
     });
-    state.ml.active = status || {};
-    state.ml.metrics = quality || {};
-    state.ml.drift = drift || {};
-    state.ml.autoUpdate = !!(autoUpdate && autoUpdate.enabled);
-    state.ml.predictions = (predictions.items || []).map((item) => ({ ...item }));
-    renderMlSection();
-    renderMlPredictions();
-  } catch (err) {
-    console.error('Failed to load ML dashboard', err);
   }
+  return [];
+}
+
+function normalizeVersionsResponse(task, response) {
+  if (!response) return [];
+  let versionsPayload = [];
+  if (Array.isArray(response)) {
+    versionsPayload = response;
+  } else if (response && Array.isArray(response.versions)) {
+    versionsPayload = response.versions;
+  } else if (response && Array.isArray(response[task])) {
+    versionsPayload = response[task];
+  }
+  return versionsPayload
+    .map((item) => normalizeVersionEntry(item))
+    .filter((item) => item !== null);
+}
+
+function buildMetricsMap(metricsList) {
+  const metricsMap = new Map();
+  metricsList.forEach((item) => {
+    const normalized = normalizeVersionEntry(item);
+    if (!normalized) return;
+    const metrics = normalizeMetricFields(item || {});
+    if (Object.keys(metrics).length) {
+      metricsMap.set(String(normalized.version), metrics);
+    }
+  });
+  return metricsMap;
+}
+
+async function loadMlDashboard() {
+  const tasks = ['attack', 'vpn', 'anomaly'];
+  const safeFetch = async (path) => {
+    try {
+      return await apiFetch(path);
+    } catch (err) {
+      console.warn(`Не удалось загрузить ${path}:`, err);
+      return null;
+    }
+  };
+
+  const [status, quality, autoUpdate, drift, predictions] = await Promise.all([
+    safeFetch('/model_status'),
+    safeFetch('/quality_metrics'),
+    safeFetch('/auto_update_status'),
+    safeFetch('/drift_status'),
+    safeFetch('/ml/predictions?limit=50'),
+  ]);
+
+  state.ml.tasks = tasks;
+  state.ml.active = status || {};
+  state.ml.metrics = quality || {};
+  state.ml.drift = drift || {};
+  state.ml.autoUpdate = !!(autoUpdate && autoUpdate.enabled);
+  state.ml.predictions = (predictions?.items || []).map((item) => ({ ...item }));
+
+  const versionsResponses = await Promise.allSettled(
+    tasks.map((task) => apiFetch(`/get_versions?task=${task}`))
+  );
+
+  const normalizedVersions = {};
+  tasks.forEach((task, idx) => {
+    const result = versionsResponses[idx];
+    let versions = [];
+    if (result.status === 'fulfilled') {
+      versions = normalizeVersionsResponse(task, result.value);
+    } else {
+      console.warn(`Не удалось загрузить версии для ${task}:`, result.reason);
+    }
+
+    const qualityList = normalizeQualityMetrics(state.ml.metrics?.[task]);
+    const metricsMap = buildMetricsMap(qualityList);
+
+    if (!versions.length && qualityList.length) {
+      versions = qualityList
+        .map((item) => normalizeVersionEntry(item))
+        .filter((item) => item !== null);
+    } else {
+      versions = versions.map((item) => {
+        const metrics = metricsMap.get(String(item.version));
+        return metrics ? { ...item, ...metrics } : item;
+      });
+    }
+
+    normalizedVersions[task] = versions;
+  });
+
+  state.ml.versions = normalizedVersions;
+  renderMlSection();
+  renderMlPredictions();
 }
 
 function renderMlSection() {
@@ -449,35 +563,68 @@ function renderMlSection() {
     const driftBox = card.querySelector('[data-role="drift"]');
     const activeBox = card.querySelector('[data-role="active"]');
     const versions = state.ml.versions[task] || [];
+    const activeFromVersions = versions.find((v) => v.active);
+    const statusActive = state.ml.active?.[task];
+    let activeVersion = activeFromVersions?.version ?? statusActive?.version ?? null;
+
+    if (!activeVersion && versions.length) {
+      activeVersion = versions[0].version;
+    }
+
     if (select) {
-      const current = select.value;
       select.innerHTML = '';
-      versions.forEach((item) => {
+      versions.forEach((item, index) => {
         const option = document.createElement('option');
         option.value = item.version;
         option.textContent = item.version;
-        if (item.active || item.version === current) {
+        if (
+          String(item.version) === String(activeVersion) ||
+          (!activeVersion && index === 0)
+        ) {
           option.selected = true;
         }
         select.appendChild(option);
       });
+
+      if (!versions.length) {
+        const emptyOption = document.createElement('option');
+        emptyOption.textContent = '—';
+        emptyOption.value = '';
+        emptyOption.selected = true;
+        select.appendChild(emptyOption);
+      }
+
+      if (activeVersion && select.options.length) {
+        const matchedOption = Array.from(select.options).find(
+          (opt) => String(opt.value) === String(activeVersion)
+        );
+        if (matchedOption) {
+          select.value = matchedOption.value;
+        } else if (select.options[0]) {
+          select.options[0].selected = true;
+          activeVersion = select.value;
+        }
+      }
     }
-    const activeInfo = state.ml.active?.[task];
-    const activeVersion = activeInfo?.version || (select && select.value) || (versions[0] && versions[0].version);
+
+    const resolvedActiveVersion =
+      activeVersion || (select && select.value) || (versions[0] && versions[0].version);
     if (activeBox) {
-      activeBox.textContent = activeVersion ? `Активна: ${activeVersion}` : 'Нет активной версии';
+      activeBox.textContent = resolvedActiveVersion
+        ? `Активна: ${resolvedActiveVersion}`
+        : 'Нет активной версии';
     }
-    if (select && activeVersion && !select.value) {
-      select.value = activeVersion;
-    }
-    const metricsSource = versions.find((v) => v.version === (select && select.value ? select.value : activeVersion)) || {};
+
+    const metricsSource =
+      versions.find((v) => String(v.version) === String(select?.value || resolvedActiveVersion)) || null;
     if (metricsBox) {
-      const metrics = ['precision', 'recall', 'f1', 'drift_resilience']
-        .map((key) => ({ key, value: Number(metricsSource[`metric_${key}`]) }))
-        .filter((item) => !Number.isNaN(item.value) && item.value >= 0);
+      const metricsData = normalizeMetricFields(metricsSource || {});
+      const metrics = ['metric_precision', 'metric_recall', 'metric_f1', 'metric_drift_resilience']
+        .map((key) => ({ key, value: metricsData[key] }))
+        .filter((item) => item.value !== undefined && !Number.isNaN(Number(item.value)));
       if (metrics.length) {
         metricsBox.innerHTML = metrics
-          .map((m) => `<span>${m.key.toUpperCase()}: ${(m.value * 100).toFixed(1)}%</span>`)
+          .map((m) => `<span>${m.key.replace('metric_', '').toUpperCase()}: ${(m.value * 100).toFixed(1)}%</span>`)
           .join('<span class="ml-metric-divider">·</span>');
       } else {
         metricsBox.innerHTML = '<span class="ml-metric-muted">Нет метрик</span>';
