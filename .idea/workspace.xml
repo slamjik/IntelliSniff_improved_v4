@@ -4,32 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="Да">
-      <change afterPath="$PROJECT_DIR$/app/test_log.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/view_sessions.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/debug_features_pipeline.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/inspect_model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/inspect_model_features.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml/convert_dataset_snakecase.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml/data/features.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml/test_attack_model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml/test_attack_model_realistic.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml/test_models_real_flows.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml/train_vpn_model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/traffic_analyzer/ml_debug.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/traffic_analyzer/parq.py" afterDir="false" />
+    <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="изменена большая часть проекта + добавлены 2 мл модели">
+      <change afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspect_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/inspect_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml/data/live_buffer.json" beforeDir="false" afterPath="$PROJECT_DIR$/ml/data/live_buffer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml/inference.py" beforeDir="false" afterPath="$PROJECT_DIR$/ml/inference.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml/model_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/ml/model_manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/traffic_analyzer/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/capture.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/features.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/features.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/ml_runtime.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/ml_runtime.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/storage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/streaming.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/streaming.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/traffic_analyzer/train_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/traffic_analyzer/train_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/feature_engineering.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/feature_engineering.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/static/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/app.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,7 +62,9 @@
     "Python.debug_features_pipeline.executor": "Run",
     "Python.inspect_model (1).executor": "Run",
     "Python.inspect_model.executor": "Run",
+    "Python.inspect_model_features.executor": "Run",
     "Python.parq.executor": "Run",
+    "Python.test.executor": "Run",
     "Python.train_model.executor": "Run",
     "Python.view_sessions.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -88,7 +73,7 @@
     "git-widget-placeholder": "#10 on codex-19vk1e"
   }
 }]]></component>
-  <component name="RunManager" selected="Python tests.Python tests in test_attack_model.py">
+  <component name="RunManager" selected="Python.inspect_model (1)">
     <configuration name="Unnamed" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="IntelliSniff_improved_v4" />
       <option name="ENV_FILES" value="" />
@@ -104,28 +89,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="debug_features_pipeline" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="IntelliSniff_improved_v4" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/debug_features_pipeline.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -200,6 +163,28 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="IntelliSniff_improved_v4" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="Python tests in test_attack_model.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="IntelliSniff_improved_v4" />
       <option name="ENV_FILES" value="" />
@@ -217,7 +202,7 @@
     </configuration>
     <list>
       <item itemvalue="Python.Unnamed" />
-      <item itemvalue="Python.debug_features_pipeline" />
+      <item itemvalue="Python.test" />
       <item itemvalue="Python.inspect_model (1)" />
       <item itemvalue="Python.inspect_model_features" />
       <item itemvalue="Python.parq" />
@@ -225,11 +210,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.inspect_model (1)" />
+        <item itemvalue="Python.inspect_model_features" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python tests.Python tests in test_attack_model.py" />
         <item itemvalue="Python.parq" />
-        <item itemvalue="Python.inspect_model_features" />
-        <item itemvalue="Python.inspect_model (1)" />
-        <item itemvalue="Python.debug_features_pipeline" />
       </list>
     </recent_temporary>
   </component>
@@ -256,13 +241,49 @@
       <option name="project" value="LOCAL" />
       <updated>1762769255859</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="изменена большая часть проекта + добавлены 2 мл модели">
+      <option name="closed" value="true" />
+      <created>1763662853872</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1763662853872</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="b37acdeb-99c1-4a72-a953-7e23f5b5e09d" value="TOOL_WINDOW" />
+        <entry key="5159fa59-e0d9-48cf-b5b6-265479473a2e" value="TOOL_WINDOW" />
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="5159fa59-e0d9-48cf-b5b6-265479473a2e">
+          <value>
+            <State />
+          </value>
+        </entry>
         <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="codex-19vk1e" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+        <entry key="b37acdeb-99c1-4a72-a953-7e23f5b5e09d">
           <value>
             <State>
               <option name="FILTERS">
@@ -284,6 +305,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Да" />
-    <option name="LAST_COMMIT_MESSAGE" value="Да" />
+    <MESSAGE value="изменена большая часть проекта + добавлены 2 мл модели" />
+    <option name="LAST_COMMIT_MESSAGE" value="изменена большая часть проекта + добавлены 2 мл модели" />
   </component>
 </project>

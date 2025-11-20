@@ -1,131 +1,142 @@
 """
-Полная диагностика модели model.joblib.
-Запуск:
-    python inspect_model.py
+Поддерживает структуру моделей IntelliSniff:
+attack_model_1.joblib
+vpn_model_1.joblib
+Внутри: {"model": sklearn_model, "features": [...]}
 """
 
-import json
 import joblib
-import inspect
+import json
 from pathlib import Path
 from pprint import pprint
 import sys
 
-print("\n=== MODEL INSPECT TOOL ===")
+print("\n=== INTELLISNIFF MODEL INSPECTOR ===")
 
-# путь к модели
-possible_paths = [
-    "model.joblib",
-    "traffic_analyzer/data/model.joblib",
-    "traffic_analyzer/model.joblib",
-    "data/model.joblib",
-]
-
-model_path = None
-for p in possible_paths:
-    if Path(p).exists():
-        model_path = p
-        break
-
-if not model_path:
-    print("❌ model.joblib не найден")
+# --- ИЩЕМ ВСЕ JOBLIB МОДЕЛИ В ml/data ---
+BASE = Path("ml/data")
+if not BASE.exists():
+    print("❌ Папка ml/data не найдена")
     sys.exit(1)
 
-print(f"📦 Используем модель: {model_path}")
+models = sorted(BASE.glob("*_model_*.joblib"))
+if not models:
+    print("❌ В ml/data нет файлов *_model_*.joblib")
+    sys.exit(1)
 
-# загружаем модель как есть
-obj = joblib.load(model_path)
+print(f"\n🔍 Найдены модели ({len(models)}):")
+for m in models:
+    print("  •", m.name)
 
-print("\n=== RAW OBJECT TYPE ===")
-print(type(obj), "\n")
-
-# если это dict — печатаем ключи верхнего уровня
-if isinstance(obj, dict):
-    print("=== TOP-LEVEL DICT KEYS ===")
-    print(list(obj.keys()))
-
-    if "model" in obj:
-        model = obj["model"]
-        print("\n=== MODEL OBJECT TYPE ===")
-        print(type(model))
-
-    else:
-        model = None
-else:
-    model = obj
+print("\n======================\n")
 
 
-print("\n=== MODEL ATTRIBUTES ===")
-attrs = [a for a in dir(model) if not a.startswith("_")]
-for a in attrs:
-    try:
-        v = getattr(model, a)
-        if isinstance(v, (int, float, bool, str, list, tuple)):
-            print(f"{a}: {v}")
-        elif isinstance(v, dict):
-            print(f"{a}: dict({len(v)})")
-        else:
-            print(f"{a}: {type(v)}")
-    except Exception as e:
-        print(f"{a}: <error {e}>")
+# ------------------------------------------------------------------
+# ФУНКЦИЯ ПЕЧАТИ МОДЕЛИ
+# ------------------------------------------------------------------
+def inspect_bundle(path: Path):
+    print(f"\n=== 📦 Модель: {path.name} ===")
 
-# --- FEATURE NAMES ---
-print("\n=== FEATURE NAMES MODEL EXPECTS ===")
-try:
-    names = model.feature_names_in_
-    print("feature_names_in_:")
-    pprint(list(names))
-except Exception as e:
-    print("⚠ model.feature_names_in_ не найден:", e)
+    bundle = joblib.load(path)
 
-# ---- If model is a pipeline ----
-if "steps" in dir(model):
-    try:
+    if not isinstance(bundle, dict):
+        print("❌ Файл НЕ является bundle dict → непонятный формат")
+        return
+
+    keys = list(bundle.keys())
+    print("🔑 Ключи:", keys)
+
+    model = bundle.get("model")
+    features = bundle.get("features")
+    trained = bundle.get("trained_at")
+
+    print(f"\n📌 trained_at: {trained}")
+    print(f"📌 Количество фичей: {len(features) if features else 0}")
+
+    if features:
+        print("\n=== FEATURES ===")
+        pprint(features)
+
+    # ------------------------------------------------------------------
+    # ATRIBUTES
+    # ------------------------------------------------------------------
+    if model is None:
+        print("❌ model отсутствует в bundle")
+        return
+
+    print("\n=== MODEL OBJECT TYPE ===")
+    print(type(model))
+
+    print("\n=== MODEL ATTRIBUTES ===")
+    attrs = [a for a in dir(model) if not a.startswith("_")]
+    for a in attrs:
+        try:
+            v = getattr(model, a)
+            if isinstance(v, (int, float, str)):
+                print(f"{a}: {v}")
+            elif isinstance(v, list):
+                print(f"{a}: list({len(v)})")
+            elif isinstance(v, dict):
+                print(f"{a}: dict({len(v)})")
+            else:
+                print(f"{a}: {type(v)}")
+        except:
+            pass
+
+    # ------------------------------------------------------------------
+    # pipeline?
+    # ------------------------------------------------------------------
+    if hasattr(model, "steps"):
         print("\n=== PIPELINE STEPS ===")
         pprint(model.steps)
-    except:
-        pass
 
-# --- FEATURE IMPORTANCES ---
-print("\n=== FEATURE IMPORTANCE ===")
-try:
-    fi = model.feature_importances_
-    n = len(fi)
-    print(f"Количество фичей: {n}")
-    print("Top 20:")
-    for i, imp in enumerate(fi[:20]):
-        print(f"{i:3d}: {imp}")
-except Exception as e:
-    print("⚠ feature_importances_ недоступно:", e)
-
-# --- CLASSES ---
-print("\n=== MODEL CLASSES ===")
-try:
-    pprint(model.classes_)
-except Exception as e:
-    print("⚠ model.classes_ отсутствует:", e)
-
-# --- Parameters ---
-print("\n=== MODEL PARAMETERS ===")
-try:
-    params = model.get_params()
-    pprint(params)
-except Exception as e:
-    print("⚠ get_params() ошибка:", e)
-
-# --- Try SHAP compatibility ---
-print("\n=== CHECKING SHAP COMPATIBILITY ===")
-try:
-    import shap
-
+    # ------------------------------------------------------------------
+    # feature_names_in_
+    # ------------------------------------------------------------------
+    print("\n=== MODEL.feature_names_in_ ===")
     try:
-        explainer = shap.TreeExplainer(model)
-        print("SHAP TreeExplainer OK")
+        pprint(list(model.feature_names_in_))
     except Exception as e:
-        print("TreeExplainer ERROR:", e)
+        print("⚠ feature_names_in_ отсутствует:", e)
 
-except ImportError:
-    print("SHAP не установлен")
+    # ------------------------------------------------------------------
+    # feature_importances_
+    # ------------------------------------------------------------------
+    print("\n=== FEATURE IMPORTANCE ===")
+    try:
+        fi = model.feature_importances_
+        print(f"Всего: {len(fi)}")
+        print("Top 20:")
+        for i, imp in enumerate(fi[:20]):
+            print(f"{i:3d}: {imp}")
+    except Exception as e:
+        print("⚠ Нет feature_importances_:", e)
 
+    # ------------------------------------------------------------------
+    # classes_
+    # ------------------------------------------------------------------
+    print("\n=== MODEL CLASSES ===")
+    try:
+        pprint(model.classes_)
+    except Exception as e:
+        print("⚠ Нет .classes_:", e)
+
+    # ------------------------------------------------------------------
+    # parameters
+    # ------------------------------------------------------------------
+    print("\n=== MODEL PARAMETERS ===")
+    try:
+        pprint(model.get_params())
+    except Exception as e:
+        print("⚠ Ошибка get_params():", e)
+
+    print("\n====================\n")
+
+
+# ------------------------------------------------------------------
+# Запуск для всех моделей
+# ------------------------------------------------------------------
+for m in models:
+    inspect_bundle(m)
 
 print("\n=== END ===")
