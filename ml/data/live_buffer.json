@@ -32,2911 +32,6 @@
         "value": 0.0
       }
     ],
-    "timestamp": 1763113994.5155692,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113994.7070947,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113994.8862324,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113995.065512,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113995.2604072,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113995.4400032,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113995.616677,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113995.7921376,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113995.9766166,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113996.157595,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113996.3413372,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113996.5310886,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113996.7176075,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113996.898357,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113997.0690985,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113997.2502854,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113997.441918,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113997.6091378,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113997.7889075,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113997.944015,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113998.1017637,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763113998.2581458
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763114785.3154092
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763114793.3159611
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643745.020431,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643746.1950743,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643746.3935714,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643746.5706162,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643746.750605,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643747.929789,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643749.0704513,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643750.213534,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643750.354732,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643750.4845169,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643750.6250122,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643751.7783763,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643752.9100633,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643754.119207,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643754.3262587,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643756.499514,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643757.6870568,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643757.8846886,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643760.058214,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643760.2458284,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643761.4102294,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643761.5969923,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643762.7912862,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643762.974713,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643763.1531925,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643763.3478348,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643763.5360744,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643763.7326949,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643763.9336133,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643764.1288266,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643764.3042588,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643764.4661846,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643764.6407883,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643764.8184488,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643764.986928,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643765.18543,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643765.3775651,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643765.5569649,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643765.823949,
-    "drift": {
-      "jsd": 0.0,
-      "z_score": 0.0,
-      "drift": false
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643766.014933,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643766.1651642,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643766.2916355,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643766.429902,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643766.5756822,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643766.719871,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643766.8682148,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643767.0232468,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643767.1680593,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
-    "timestamp": 1763643767.3021286,
-    "drift": {
-      "jsd": 0.8492647594126547,
-      "z_score": 0.0,
-      "drift": true
-    }
-  },
-  {
-    "label": 0,
-    "score": 0.7147303895749809,
-    "task": "attack",
-    "model": "RandomForestClassifier",
-    "version": "user_model_absolute",
-    "explanation": [
-      {
-        "feature": "flow duration",
-        "importance": 0.03222168005698926,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat mean",
-        "importance": 0.03209495615879172,
-        "value": 0.0
-      },
-      {
-        "feature": "flow iat max",
-        "importance": 0.031062532034292704,
-        "value": 0.0
-      },
-      {
-        "feature": "fwd packets length total",
-        "importance": 0.031047060264074656,
-        "value": 0.0
-      },
-      {
-        "feature": "init win bytes forward",
-        "importance": 0.02666833242039311,
-        "value": 0.0
-      }
-    ],
     "timestamp": 1763643767.445718,
     "drift": {
       "jsd": 0.8492647594126547,
@@ -7860,5 +4955,2852 @@
       }
     ],
     "timestamp": 1763668816.2678354
+  },
+  {
+    "label": 0,
+    "score": 0.7397997522241104,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670000.4948146,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 147.7
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 147.7
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 1722.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.00010585784912109375
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7277777777777777,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670003.2808,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 425.0571428571429
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 425.0571428571429
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 25354.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 3.814697265625e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7387208423910712,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670005.1516936,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 439.4848484848485
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 439.4848484848485
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 25368.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 3.600120544433594e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8403546500706903,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670005.9151359,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 52.5
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 52.5
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 36289.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8078995143033977,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670009.6574638,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 75.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 75.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 42228.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 9.607204914093018
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7234211284722223,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670016.3642964,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 514.9473684210526
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 514.9473684210526
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 47914.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 4.8160552978515625e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7164986201688489,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670017.094509,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 453.27272727272725
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 453.27272727272725
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 47915.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 3.719329833984375e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8867040781158907,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670023.636469,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 96.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 96.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 60299.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7611111111111111,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670032.3028307,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 331.1463414634146
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 331.1463414634146
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 25344.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 4.410743713378906e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7109430646132935,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670033.9744425,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 404.8918918918919
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 404.8918918918919
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 58675.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 2.6941299438476562e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.845463053988433,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670035.67912,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 76.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 76.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 49696.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8545394963505936,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670037.3490772,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 185.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 185.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 53532.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8725377442325385,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670038.0385628,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 109.5
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 109.5
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 58468.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7770526764969193,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670038.8331265,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 172.75
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 172.75
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 36289.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 2.193450927734375e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7949547645843419,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670040.5286329,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 198.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 198.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 57350.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.001924991607666
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7949547645843419,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670041.2239485,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 198.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 198.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 57351.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.002044916152954
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7722222222222223,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670042.9073439,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 424.47727272727275
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 424.47727272727275
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 25336.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 8.988380432128906e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7222222222222222,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670045.7103565,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 393.2307692307692
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 393.2307692307692
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 36170.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 2.09808349609375e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7568223468897025,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670046.3760774,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 73.45454545454545
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 73.45454545454545
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 45266.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.27425289154052734
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7403458601429201,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670047.0925899,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 133.33939393939394
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 133.33939393939394
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 47514.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.011359930038452148
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7240971615096596,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670047.759126,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 106.55555555555556
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 106.55555555555556
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 53449.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0009369850158691406
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7389624980945624,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670048.4381871,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 69.17647058823529
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 69.17647058823529
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 33503.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0006248950958251953
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7166666666666667,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670049.1219072,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 357.39622641509436
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 357.39622641509436
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 53447.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.5020370483398438e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.785084001726584,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670049.8392177,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 87.16216216216216
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 87.16216216216216
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 54811.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.07551312446594238
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7388888888888889,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670050.5683637,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 427.1730769230769
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 427.1730769230769
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 25346.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.3113021850585938e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7463193837318818,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670051.3104258,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 118.80952380952381
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 118.80952380952381
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 10262.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.04158186912536621
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7404770746722509,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670051.992727,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 60.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 60.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 0.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7679799305041444,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670052.6807094,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 81.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 81.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 62412.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 2.3322131633758545
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8262549545190289,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670053.392653,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 50.4
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 50.4
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 27831.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 14.525648832321167
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7585422459858263,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670054.0409846,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 106.93333333333334
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 106.93333333333334
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 34836.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 4.711001873016357
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8640366009089975,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670054.7854683,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 21440.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.100024938583374
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8695921564645529,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670055.4297507,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 42212.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.100000143051147
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7178655729166667,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670056.075626,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 698.2188552188552
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 698.2188552188552
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 36127.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.1205673217773438e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8695921564645529,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670056.7400122,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 42220.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.09991192817688
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.813673549548303,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670057.4320018,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 56.4
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 56.4
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 7213.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0001399517059326172
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8695921564645529,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670058.2035153,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 42214.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.100352048873901
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8695921564645529,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670058.929923,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 42222.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.09973406791687
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.869592156464553,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670059.6423922,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 64357.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.099978923797607
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7333333333333333,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670060.6662583,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 277.08
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 277.08
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 59939.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.6927719116210938e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.0,
+      "z_score": 0.0,
+      "drift": false
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7123100173611111,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670061.3875718,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 743.6551724137931
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 743.6551724137931
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 42224.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 7.891654968261719e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7374519104632165,
+      "z_score": 108011.90469778639,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7333333333333333,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670062.0652606,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 312.8666666666667
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 312.8666666666667
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 54830.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0009179115295410156
+      }
+    ],
+    "drift": {
+      "jsd": 0.7385662330542078,
+      "z_score": 111694.2807596184,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8327317119933719,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670062.7122066,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 47.75
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 47.75
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 3473.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0005710124969482422
+      }
+    ],
+    "drift": {
+      "jsd": 0.7396515729414959,
+      "z_score": 109041.78329416589,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7277777777777777,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670063.376231,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 409.13953488372096
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 409.13953488372096
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 25376.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 2.002716064453125e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7407091367131069,
+      "z_score": 113281.01853159095,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7354622630840972,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670064.0330746,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 152.5625
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 152.5625
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 2571.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.2932260036468506
+      }
+    ],
+    "drift": {
+      "jsd": 0.7417400665862959,
+      "z_score": 111329.51171676004,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8695921564645529,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670064.7343118,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 54802.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.10362696647644
+      }
+    ],
+    "drift": {
+      "jsd": 0.7427454439896432,
+      "z_score": 108855.52256749872,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.764914053184508,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670065.4482653,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 79.76923076923077
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 79.76923076923077
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 48996.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.22658205032348633
+      }
+    ],
+    "drift": {
+      "jsd": 0.7437262930443249,
+      "z_score": 106664.76739904491,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8262549545190292,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670066.0918517,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 50.4
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 50.4
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 62460.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 14.491419076919556
+      }
+    ],
+    "drift": {
+      "jsd": 0.7446835839132115,
+      "z_score": 104416.01573154527,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.869592156464553,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670066.7530596,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 62300.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.100210905075073
+      }
+    ],
+    "drift": {
+      "jsd": 0.7456182359986135,
+      "z_score": 102240.6820704714,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8751477120201084,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670067.4417214,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 1783.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.099110126495361
+      }
+    ],
+    "drift": {
+      "jsd": 0.7465311209782572,
+      "z_score": 100154.13753842097,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8640366009089974,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670068.0672395,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 16462.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.099969863891602
+      }
+    ],
+    "drift": {
+      "jsd": 0.7474230656752896,
+      "z_score": 98151.05478765254,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8695921564645529,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670068.7287698,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 54803.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.092516899108887
+      }
+    ],
+    "drift": {
+      "jsd": 0.7482948547624946,
+      "z_score": 96226.52430162013,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8695921564645529,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670069.4381328,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 61926.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.07210087776184
+      }
+    ],
+    "drift": {
+      "jsd": 0.7491472333039295,
+      "z_score": 94376.01421889667,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7123100173611111,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670070.0817528,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 759.4567901234568
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 759.4567901234568
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 9685.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.2874603271484375e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7499809091392255,
+      "z_score": 101530.75975517786,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7400877951388889,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670070.733839,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 693.6491228070175
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 693.6491228070175
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 9687.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.5020370483398438e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7507965551171096,
+      "z_score": 108013.12750580482,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7345322395833334,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670071.4088259,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 702.7169811320755
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 702.7169811320755
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 9690.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.4066696166992188e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7515948111854952,
+      "z_score": 114245.83663234561,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.758585199291964,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670072.0347614,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 77.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 77.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 36115.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0005049705505371094
+      }
+    ],
+    "drift": {
+      "jsd": 0.752376286345892,
+      "z_score": 112282.3656634681,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7397379614492492,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670072.7207067,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 167.29032258064515
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 167.29032258064515
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 14784.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.5974044799804688e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.753141560480028,
+      "z_score": 112510.43989536892,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7906615437712952,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670073.4044056,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 113.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 113.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 53769.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 23.97285795211792
+      }
+    ],
+    "drift": {
+      "jsd": 0.7498261185165278,
+      "z_score": 110580.53574931085,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8454339871033493,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670074.072524,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 49.09090909090909
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 49.09090909090909
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 6042.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 14.6436288356781
+      }
+    ],
+    "drift": {
+      "jsd": 0.7505605323507232,
+      "z_score": 108712.6051048572,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8640366009089974,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670074.8080108,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 12397.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.099801063537598
+      }
+    ],
+    "drift": {
+      "jsd": 0.7512807569220625,
+      "z_score": 106900.72835310957,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8751477120201084,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670075.7340698,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 3506.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.103286027908325
+      }
+    ],
+    "drift": {
+      "jsd": 0.7519872429751195,
+      "z_score": 105148.25739650123,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7804924252687853,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670076.4423282,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 64.42105263157895
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 64.42105263157895
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 65050.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.3556170463562012
+      }
+    ],
+    "drift": {
+      "jsd": 0.7526804217855196,
+      "z_score": 103480.74950817594,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.869592156464553,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670077.1287594,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 40.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 40.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 63782.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 15.099851846694946
+      }
+    ],
+    "drift": {
+      "jsd": 0.7533607061790402,
+      "z_score": 101838.19792868108,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7333333333333333,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670077.8096182,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 408.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 408.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 36176.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 3.2901763916015625e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7540284914925213,
+      "z_score": 104095.6176178387,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7388888888888889,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670078.4744797,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 371.14285714285717
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 371.14285714285717
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 47583.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 3.790855407714844e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7546841564795892,
+      "z_score": 106467.6170153968,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7444444444444445,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670079.052638,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 352.09375
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 352.09375
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 58669.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 3.2901763916015625e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7553280641641644,
+      "z_score": 108399.66033301898,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7400877951388889,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670079.7526815,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 536.12
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 536.12
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 58679.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.5020370483398438e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7559605626446766,
+      "z_score": 112494.0505202306,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7801755902777778,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670080.4081552,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 1059.6
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 1059.6
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 57349.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0004379749298095703
+      }
+    ],
+    "drift": {
+      "jsd": 0.7530586948556334,
+      "z_score": 113686.47398936182,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.8333333333333334,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670081.0424585,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 334.4
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 334.4
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 1900.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 0.0
+      }
+    ],
+    "drift": {
+      "jsd": 0.750566845774348,
+      "z_score": 112052.64159890673,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7166666666666667,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670081.6759732,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 395.2631578947368
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 395.2631578947368
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 64401.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 2.5987625122070312e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7511659260809623,
+      "z_score": 114583.54610922861,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7949547645843419,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670082.315672,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 198.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 198.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 65109.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.0022549629211426
+      }
+    ],
+    "drift": {
+      "jsd": 0.7489918943876803,
+      "z_score": 112969.69334712681,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7949547645843419,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670082.955579,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 198.0
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 198.0
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 65110.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 1.0022540092468262
+      }
+    ],
+    "drift": {
+      "jsd": 0.7470888705343174,
+      "z_score": 111400.6698284167,
+      "drift": true
+    }
+  },
+  {
+    "label": 0,
+    "score": 0.7498319535021822,
+    "task": "attack",
+    "version": 1,
+    "timestamp": 1763670083.5734417,
+    "explanation": [
+      {
+        "feature": "fwd_packet_length_max",
+        "importance": 0.09267903891383372,
+        "value": 310.45
+      },
+      {
+        "feature": "fwd_packet_length_mean",
+        "importance": 0.05779331148129979,
+        "value": 310.45
+      },
+      {
+        "feature": "init_win_bytes_backward",
+        "importance": 0.0529479596294593,
+        "value": 0.0
+      },
+      {
+        "feature": "destination_port",
+        "importance": 0.04076624305965809,
+        "value": 21253.0
+      },
+      {
+        "feature": "bwd_iat_min",
+        "importance": 0.035885642289172584,
+        "value": 3.4809112548828125e-05
+      }
+    ],
+    "drift": {
+      "jsd": 0.7476534328052392,
+      "z_score": 113076.91015588753,
+      "drift": true
+    }
   }
 ]
