@@ -19,10 +19,11 @@ from .streaming import (
     stop_streaming,
 )
 
-from .nfstream_helper import (
-    NFSTREAM_AVAILABLE,
-    make_streamer,
-    iterate_flows_from_streamer,
+from .nfstream_helper import NFSTREAM_AVAILABLE, iterate_flows_from_streamer, make_streamer
+from .session_bridge import (
+    finish_capture_session,
+    log_capture_event,
+    start_capture_session,
 )
 
 
@@ -309,74 +310,88 @@ def _run_nfstream(interface, pcap=None, flow_timeout=30.0):
 
 def start_capture(iface=None, bpf=None, flow_timeout=30.0, use_nfstream=False):
     global _sniffer, _sniffers, _nf_thread, _nf_stop
+    already_running = False
     with _sniffer_lock:
-        if _sniffer or _sniffers or (_nf_thread and _nf_thread.is_alive()):
-            log.warning("Capture already running")
+        already_running = bool(_sniffer or _sniffers or (_nf_thread and _nf_thread.is_alive()))
+    if already_running:
+        log.warning("Capture already running, forcing previous session stop")
+        stop_capture(result="forced_stop")
+
+    # Auto detect
+    if not iface or iface.strip() == "" or iface.lower() == "auto":
+        all_ifaces = list_ifaces()
+        if not all_ifaces:
+            log.error("No interfaces found for auto mode.")
             return
+        iface = next((i for i in all_ifaces if i != "All interfaces"), all_ifaces[0])
+        log.info(f"Auto-selected: {iface}")
 
-        # Auto detect
-        if not iface or iface.strip() == "" or iface.lower() == "auto":
-            all_ifaces = list_ifaces()
-            if not all_ifaces:
-                log.error("No interfaces found for auto mode.")
-                return
-            iface = next((i for i in all_ifaces if i != "All interfaces"), all_ifaces[0])
-            log.info(f"Auto-selected: {iface}")
+    display_iface, capture_iface = _normalize_iface_for_capture(iface)
 
-        display_iface, capture_iface = _normalize_iface_for_capture(iface)
+    init_streaming(flow_timeout=flow_timeout)
+    start_capture_session(
+        details={
+            "mode": "capture",
+            "iface": display_iface,
+            "bpf": bpf,
+            "use_nfstream": bool(use_nfstream and NFSTREAM_AVAILABLE),
+        }
+    )
 
-        init_streaming(flow_timeout=flow_timeout)
-        _status.update({
-            'running': True,
-            'started_at': time.time(),
-            'iface': display_iface,
-            'bpf': bpf,
-            'use_nfstream': bool(use_nfstream and NFSTREAM_AVAILABLE),
-            'flow_timeout': flow_timeout,
-        })
+    _status.update({
+        'running': True,
+        'started_at': time.time(),
+        'iface': display_iface,
+        'bpf': bpf,
+        'use_nfstream': bool(use_nfstream and NFSTREAM_AVAILABLE),
+        'flow_timeout': flow_timeout,
+    })
 
-        if display_iface == "All interfaces":
-            _sniffers = []
-            for name in list_ifaces():
-                if name == "All interfaces":
-                    continue
-                try:
-                    base = name.split(" ")[0]
-                    sniffer = AsyncSniffer(iface=base, filter=bpf, prn=_on_packet, store=False)
-                    sniffer.start()
-                    _sniffers.append(sniffer)
-                except Exception:
-                    log.exception(f"Failed to start sniffer on {name}")
-            return
+    if display_iface == "All interfaces":
+        _sniffers = []
+        for name in list_ifaces():
+            if name == "All interfaces":
+                continue
+            try:
+                base = name.split(" ")[0]
+                sniffer = AsyncSniffer(iface=base, filter=bpf, prn=_on_packet, store=False)
+                sniffer.start()
+                _sniffers.append(sniffer)
+                log_capture_event("sniffer_started", {"iface": base})
+            except Exception:
+                log.exception(f"Failed to start sniffer on {name}")
+        return
 
-        # NFSTREAM mode
-        if use_nfstream and NFSTREAM_AVAILABLE:
-            log.info(f"Starting NFStream capture on {capture_iface}")
-            _nf_thread = threading.Thread(
-                target=_run_nfstream,
-                kwargs={'interface': capture_iface, 'flow_timeout': flow_timeout},
-                daemon=True,
-            )
-            _nf_thread.start()
-            return
+    # NFSTREAM mode
+    if use_nfstream and NFSTREAM_AVAILABLE:
+        log.info(f"Starting NFStream capture on {capture_iface}")
+        log_capture_event("nfstream_started", {"iface": capture_iface, "bpf": bpf})
+        _nf_thread = threading.Thread(
+            target=_run_nfstream,
+            kwargs={'interface': capture_iface, 'flow_timeout': flow_timeout},
+            daemon=True,
+        )
+        _nf_thread.start()
+        return
 
-        # SCAPY fallback
-        if not SCAPY_AVAILABLE:
-            log.error("Scapy is not available.")
-            _status['running'] = False
-            return
-        try:
-            sniffer = AsyncSniffer(iface=capture_iface, filter=bpf, prn=_on_packet, store=False)
-            sniffer.start()
-            _sniffer = sniffer
-            log.info(f"AsyncSniffer started on {capture_iface}")
-        except Exception:
-            log.exception("Failed to start AsyncSniffer")
-            _sniffer = None
-            _status['running'] = False
+    # SCAPY fallback
+    if not SCAPY_AVAILABLE:
+        log.error("Scapy is not available.")
+        _status['running'] = False
+        return
+    try:
+        sniffer = AsyncSniffer(iface=capture_iface, filter=bpf, prn=_on_packet, store=False)
+        sniffer.start()
+        _sniffer = sniffer
+        log_capture_event("scapy_started", {"iface": capture_iface, "bpf": bpf})
+        log.info(f"AsyncSniffer started on {capture_iface}")
+    except Exception:
+        log.exception("Failed to start AsyncSniffer")
+        _sniffer = None
+        _status['running'] = False
 
 
-def stop_capture():
+def stop_capture(result: str = "success"):
     global _sniffer, _sniffers, _nf_thread, _nf_stop
     with _sniffer_lock:
         if _sniffer:
@@ -404,6 +419,11 @@ def stop_capture():
 
         stop_streaming()
         _status.update({'running': False, 'stopped_at': time.time()})
+
+    try:
+        finish_capture_session(result=result)
+    except Exception:
+        log.warning("Failed to finish capture session", exc_info=True)
         log.info("All captures stopped")
 
 
