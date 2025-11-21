@@ -6,7 +6,7 @@ from collections import namedtuple
 from typing import Dict, Optional
 
 from .features import extract_features_from_flow
-from .storage import storage
+from traffic_analyzer.flow_logger import save_flow
 from .ml_runtime import get_predictor, get_model_manager
 from .event_bus import publish
 
@@ -509,9 +509,9 @@ def _emit_flow(key):
     }
 
     try:
-        storage.insert_flow(flow_dict)
+        save_flow(flow_dict)
     except Exception:
-        log.exception("Storage insert error")
+        log.exception("FlowLogger insert error")
 
     try:
         publish('flow', flow_dict)
