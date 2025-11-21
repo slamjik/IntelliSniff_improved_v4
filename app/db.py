@@ -23,7 +23,13 @@ engine = create_engine(
     pool_pre_ping=True,
     connect_args=connect_args,
 )
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False,
+    expire_on_commit=False,  # ← ФИКС
+    future=True
+)
 
 
 def get_db() -> Generator[Session, None, None]:
