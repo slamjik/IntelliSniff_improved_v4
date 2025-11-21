@@ -457,7 +457,9 @@ def _emit_flow(key):
     predictor = get_predictor()
 
     try:
-        features_payload = {**feats, **hints, 'duration': feats.get('duration'), 'iface': flow.iface}
+        features_payload = {**feats, **hints, 'iface': flow.iface}
+        if 'duration' not in features_payload:
+            features_payload['duration'] = features_payload.get('flow_duration', feats.get('duration'))
         res = predictor.predict(features_payload, task='attack')
     except Exception:
         log.exception("Model prediction error")
