@@ -116,22 +116,22 @@ class Flow(Base):
     # timestamp of the flow
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    iface: Mapped[Optional[str]] = mapped_column(String(32))
+    iface: Mapped[Optional[str]] = mapped_column(String(128))
 
     # IPs and ports
-    src: Mapped[str] = mapped_column(String(64), nullable=False)
-    dst: Mapped[str] = mapped_column(String(64), nullable=False)
+    src: Mapped[str] = mapped_column(String(128), nullable=False)
+    dst: Mapped[str] = mapped_column(String(128), nullable=False)
     sport: Mapped[Optional[int]] = mapped_column(Integer)
     dport: Mapped[Optional[int]] = mapped_column(Integer)
 
-    proto: Mapped[Optional[str]] = mapped_column(String(16))
+    proto: Mapped[Optional[str]] = mapped_column(String(32))
 
     packets: Mapped[Optional[int]] = mapped_column(Integer)
     bytes: Mapped[Optional[int]] = mapped_column(Integer)
 
     # ML fields
     label: Mapped[Optional[str]] = mapped_column(String(64))
-    label_name: Mapped[Optional[str]] = mapped_column(String(128))
+    label_name: Mapped[Optional[str]] = mapped_column(String(64))
     score: Mapped[Optional[float]] = mapped_column(Float)
 
     # JSON summary

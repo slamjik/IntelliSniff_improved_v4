@@ -1,12 +1,24 @@
+from __future__ import annotations
+
 import logging
+import socket
 import threading
 import time
-import socket
 from typing import Iterable, Optional
+
 import psutil
 
-from .streaming import handle_packet, init_streaming, stop_streaming, _flows, Flow, _emit_flow
-from .nfstream_helper import NFSTREAM_AVAILABLE, make_streamer, iterate_flows_from_streamer
+from .streaming import (
+    Flow,
+    FlowKey,
+    _emit_flow,
+    _flows,
+    _normalise_flow_key,
+    handle_packet,
+    init_streaming,
+    stop_streaming,
+)
+from .nfstream_helper import NFSTREAM_AVAILABLE, iterate_flows_from_streamer, make_streamer
 
 log = logging.getLogger('ta.capture')
 
@@ -190,12 +202,12 @@ def _process_nfstream_flow(nf_flow, iface_name):
     Корректно переносит NFStream flow в наш Flow так,
     чтобы duration/packets/bytes/IAT и т.п. были настоящими.
     """
-    key = (
+    key, _ = _normalise_flow_key(
         nf_flow.src_ip,
         nf_flow.dst_ip,
         nf_flow.src_port,
         nf_flow.dst_port,
-        nf_flow.protocol,
+        str(getattr(nf_flow, "protocol", "")).upper(),
     )
 
     ts_first = nf_flow.bidirectional_first_seen_ms / 1000.0
@@ -219,9 +231,36 @@ def _process_nfstream_flow(nf_flow, iface_name):
 
     duration = max(0.001, ts_last - ts_first)
 
-    f.avg_pkt_size = nf_flow.bytes / max(1, nf_flow.packets)
-    f.flow_pkts_per_sec = nf_flow.packets / duration
-    f.flow_bytes_per_sec = nf_flow.bytes / duration
+    avg_pkt_size = nf_flow.bytes / max(1, nf_flow.packets)
+    flow_iat = duration / max(1, nf_flow.packets - 1)
+
+    def _seed_stats(stats_obj, count, mean_value):
+        count = int(max(0, count))
+        if count <= 0:
+            stats_obj.count = 0
+            stats_obj._sum = 0.0
+            stats_obj._sum_sq = 0.0
+            stats_obj._min = None
+            stats_obj._max = None
+            return
+        stats_obj.count = count
+        stats_obj._sum = float(mean_value) * count
+        stats_obj._sum_sq = float(mean_value) * float(mean_value) * count
+        stats_obj._min = float(mean_value)
+        stats_obj._max = float(mean_value)
+
+    _seed_stats(f.packet_stats, nf_flow.packets, avg_pkt_size)
+    _seed_stats(f.flow_iat_stats, max(0, nf_flow.packets - 1), flow_iat)
+
+    fwd_avg = nf_flow.fwd_bytes / max(1, nf_flow.fwd_packets)
+    bwd_avg = nf_flow.bwd_bytes / max(1, nf_flow.bwd_packets)
+    _seed_stats(f.fwd_packet_stats, nf_flow.fwd_packets, fwd_avg)
+    _seed_stats(f.bwd_packet_stats, nf_flow.bwd_packets, bwd_avg)
+
+    fwd_iat = duration / max(1, nf_flow.fwd_packets - 1)
+    bwd_iat = duration / max(1, nf_flow.bwd_packets - 1)
+    _seed_stats(f.fwd_iat_stats, max(0, nf_flow.fwd_packets - 1), fwd_iat)
+    _seed_stats(f.bwd_iat_stats, max(0, nf_flow.bwd_packets - 1), bwd_iat)
 
     # Сохраняем метаданные (TLS, HTTP, DNS)
     f.extra.update({
