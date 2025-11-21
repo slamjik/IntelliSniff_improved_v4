@@ -38,6 +38,7 @@ flow_logger.py — боевой логгер сетевых потоков в Po
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+
 import logging
 import threading
 import time
@@ -173,6 +174,7 @@ class FlowLogger:
         """
         # === 1) Чистим по возрасту ===
         if self._max_age_hours is not None:
+
             cutoff_dt = datetime.now(timezone.utc) - timedelta(hours=float(self._max_age_hours))
 
             db_session.execute(delete(Flow).where(Flow.ts < cutoff_dt))
@@ -186,6 +188,7 @@ class FlowLogger:
                 .limit(1)
             )
             oldest_to_keep_id = db_session.execute(subq).scalar()
+
 
             if oldest_to_keep_id:
                 db_session.execute(
