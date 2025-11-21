@@ -37,12 +37,13 @@ flow_logger.py — боевой логгер сетевых потоков в Po
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import logging
 import threading
 import time
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import delete, desc, select
+from sqlalchemy import delete, desc, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 # Важно: импортируем твои готовые объекты
@@ -123,6 +124,18 @@ def _as_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _to_utc_datetime_from_ms(value: Any) -> datetime:
+    """Convert milliseconds (or datetime) to timezone-aware datetime in UTC."""
+
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    ts_ms = _as_int(value, default=int(time.time() * 1000))
+    return datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
+
+
 # =====================================================================
 #   Класс логгера
 # =====================================================================
@@ -159,39 +172,32 @@ class FlowLogger:
           - старше max_age_hours
           - оставляем только max_rows последних
         """
-        try:
-            # === 1) Чистим по возрасту ===
-            if self._max_age_hours is not None:
-                cutoff_ts_ms = int(
-                    (time.time() - float(self._max_age_hours) * 3600.0) * 1000
-                )
+        # === 1) Чистим по возрасту ===
+        if self._max_age_hours is not None:
+            cutoff_ts_ms = int(
+                (time.time() - float(self._max_age_hours) * 3600.0) * 1000
+            )
 
-                # ВАЖНО: ts TIMESTAMP → сравниваем через TO_TIMESTAMP()
+            # ВАЖНО: ts TIMESTAMP → сравниваем через TO_TIMESTAMP()
+            db_session.execute(
+                text("DELETE FROM flows WHERE ts < TO_TIMESTAMP(:cut/1000.0)")
+                .bindparams(cut=cutoff_ts_ms)
+            )
+
+        # === 2) Чистим по количеству ===
+        if self._max_rows and self._max_rows > 0:
+            subq = (
+                select(Flow.id)
+                .order_by(desc(Flow.id))
+                .offset(self._max_rows)
+                .limit(1)
+            )
+            oldest_to_keep_id = db_session.execute(subq).scalar()
+
+            if oldest_to_keep_id:
                 db_session.execute(
-                    text("DELETE FROM flows WHERE ts < TO_TIMESTAMP(:cut/1000.0)")
-                    .bindparams(cut=cutoff_ts_ms)
+                    delete(Flow).where(Flow.id < oldest_to_keep_id)
                 )
-
-            # === 2) Чистим по количеству ===
-            if self._max_rows and self._max_rows > 0:
-                subq = (
-                    select(Flow.id)
-                    .order_by(desc(Flow.id))
-                    .offset(self._max_rows)
-                    .limit(1)
-                )
-                oldest_to_keep_id = db_session.execute(subq).scalar()
-
-                if oldest_to_keep_id:
-                    db_session.execute(
-                        delete(Flow).where(Flow.id < oldest_to_keep_id)
-                    )
-
-            db_session.commit()
-
-        except SQLAlchemyError as e:
-            db_session.rollback()
-            log.warning("FlowLogger cleanup failed: %s", e)
 
     # -----------------------------------------------------------------
     #   Публичный API: запись
@@ -205,10 +211,10 @@ class FlowLogger:
         with self._lock:
             db = SessionLocal()
             try:
-                ts_ms = _as_int(flow.get("ts"), default=int(time.time() * 1000))
+                ts_dt = _to_utc_datetime_from_ms(flow.get("ts"))
 
                 row = Flow(
-                    ts=ts_ms,
+                    ts=ts_dt,
                     iface=_as_text(flow.get("iface")),
                     src=_as_text(flow.get("src")),
                     dst=_as_text(flow.get("dst")),
@@ -321,7 +327,7 @@ class FlowLogger:
             q = (
                 select(Flow)
                 .where(Flow.label == "attack")
-                .where((Flow.score is None) | (Flow.score >= min_score))
+                .where(or_(Flow.score.is_(None), Flow.score >= min_score))
                 .order_by(desc(Flow.ts))
                 .limit(limit)
             )
