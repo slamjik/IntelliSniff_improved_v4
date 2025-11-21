@@ -18,7 +18,13 @@ from .streaming import (
     init_streaming,
     stop_streaming,
 )
-from .nfstream_helper import NFSTREAM_AVAILABLE, iterate_flows_from_streamer, make_streamer
+
+from .nfstream_helper import (
+    NFSTREAM_AVAILABLE,
+    make_streamer,
+    iterate_flows_from_streamer,
+)
+
 
 log = logging.getLogger('ta.capture')
 
