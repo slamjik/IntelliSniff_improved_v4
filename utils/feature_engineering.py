@@ -1,63 +1,20 @@
+"""Feature engineering utilities for IntelliSniff models.
+
+This module produces the exact 41 CICFlowMeter-style features expected by
+trained models. It is resilient to partially populated flow dictionaries coming
+from packet aggregation or NFStream and guarantees deterministic ordering with
+no NaN values.
 """
-Feature engineering helpers for IntelliSniff models.
-
-Варианты работы:
-
-1) Старый режим (offline / generic):
-   - extract_features(flow, numeric_features=..., hash_features=...)
-   - строит duration/packets/bytes/... + hash_* по SNI/JA3/и т.д.
-
-2) Режим моделей attack/vpn:
-   - extract_features(flow, expected_order=[ 'protocol', 'flow_duration', ... ])
-   - мы строим полный набор из 41 признака, которые ждут обученные модели:
-        'protocol',
-        'flow_duration',
-        'total_fwd_packets',
-        'total_bwd_packets',
-        ...
-        'init_win_bytes_backward'
-"""
-
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from hashlib import blake2b
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
+from typing import Dict, Mapping, MutableMapping, Optional, Sequence
 
 import numpy as np
 
-# ---------------------------------------------------------------------------
-#  БАЗОВЫЕ ЧИСЛОВЫЕ ПРИЗНАКИ (старый режим)
-# ---------------------------------------------------------------------------
-
-NUMERIC_FEATURES_DEFAULT: Tuple[str, ...] = (
-    "duration",
-    "packets",
-    "bytes",
-    "pkts_per_s",
-    "bytes_per_s",
-    "avg_pkt_size",
-    "payload_ratio",
-    "burstiness",
-    "down_up_ratio",
-    "flow_score",
-)
-
-HASH_FEATURES: Tuple[str, ...] = (
-    "tls_sni",
-    "ja3",
-    "user_agent",
-    "http_host",
-    "dns_query",
-    "app",
-)
-
-# ---------------------------------------------------------------------------
-#  CANONICAL 41 FEATURES ДЛЯ attack/vpn моделей
-# ---------------------------------------------------------------------------
-
-MODEL_FEATURES_41: Tuple[str, ...] = (
+# Ordered feature list expected by the joblib bundles
+MODEL_FEATURES_41: Sequence[str] = (
     "protocol",
     "flow_duration",
     "total_fwd_packets",
@@ -102,13 +59,8 @@ MODEL_FEATURES_41: Tuple[str, ...] = (
 )
 
 
-# ---------------------------------------------------------------------------
-#  Обёртка над вектором признаков
-# ---------------------------------------------------------------------------
-
 @dataclass(frozen=True)
 class FeatureVector:
-    """Container for ordered feature vectors."""
     names: Sequence[str]
     values: np.ndarray
 
@@ -117,292 +69,243 @@ class FeatureVector:
 
 
 # ---------------------------------------------------------------------------
-#  SAFE HELPERS
+# SAFE HELPERS
 # ---------------------------------------------------------------------------
 
-def _safe_float(value: object, default: float = 0.0) -> float:
+def _clean_number(value: object, default: float = 0.0) -> float:
+    """Convert to finite float; fall back to default on failure/NaN."""
     if value is None:
         return default
     if isinstance(value, bool):
         return float(value)
-    if isinstance(value, (int, float, np.number)):
+    try:
+        num = float(value)
+    except Exception:
         try:
-            v = float(value)
+            num = float(str(value).strip())
         except Exception:
             return default
-        if math.isnan(v):
-            return default
-        return v
-    try:
-        v = float(str(value).strip())
-        if math.isnan(v):
-            return default
-        return v
-    except Exception:
+    if math.isnan(num) or math.isinf(num):
         return default
+    return num
 
 
-def _safe_int(value: object, default: int = 0) -> int:
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, (int, np.integer)):
-        return int(value)
-    if isinstance(value, float):
-        if math.isnan(value):
-            return default
-        return int(value)
-    try:
-        return int(float(str(value).strip()))
-    except Exception:
-        return default
-
-
-def _hash_feature(text: Optional[str], num_buckets: int = 32) -> float:
-    if not text:
+def _proto_to_number(proto: object) -> float:
+    mapping = {"TCP": 6, "UDP": 17, "ICMP": 1, "ICMPV6": 58, "ARP": 2054}
+    if proto is None:
         return 0.0
-    h = blake2b(str(text).encode("utf-8"), digest_size=4).digest()
-    bucket = int.from_bytes(h, "little") % max(1, num_buckets)
-    return float(bucket) / float(num_buckets)
+    try:
+        return float(int(proto))
+    except Exception:
+        return float(mapping.get(str(proto).upper(), 0))
+
+
+def _first_existing(data: Mapping[str, object], keys: Sequence[str], default: float = 0.0) -> float:
+    for key in keys:
+        if key in data:
+            return _clean_number(data.get(key), default=default)
+    return default
 
 
 # ---------------------------------------------------------------------------
-#  СТАРОЕ: производные числовые фичи (duration, pkts_per_s, ...)
+# CORE 41-FEATURE BUILDER
 # ---------------------------------------------------------------------------
 
-def _derive_numeric_features(base: Mapping[str, object]) -> Dict[str, float]:
-    duration = max(_safe_float(base.get("duration")), 0.0)
-    packets = max(_safe_float(base.get("packets")), 0.0)
-    bytes_total = max(_safe_float(base.get("bytes")), 0.0)
+def _compute_directional_lengths(data: Mapping[str, object], prefix: str, total_bytes: float, packets: float) -> Dict[str, float]:
+    max_v = _first_existing(data, [f"{prefix}_packet_length_max", f"{prefix}_pkt_len_max", f"{prefix}_max_payload"], default=None)
+    min_v = _first_existing(data, [f"{prefix}_packet_length_min", f"{prefix}_pkt_len_min", f"{prefix}_min_payload"], default=None)
+    mean_v = _first_existing(data, [f"{prefix}_packet_length_mean", f"{prefix}_pkt_len_mean", f"{prefix}_mean_payload"], default=None)
+    std_v = _first_existing(data, [f"{prefix}_packet_length_std", f"{prefix}_pkt_len_std", f"{prefix}_std_payload"], default=None)
 
-    pkts_per_s = packets / duration if duration > 0 else packets
-    bytes_per_s = bytes_total / duration if duration > 0 else bytes_total
-    avg_pkt_size = bytes_total / packets if packets > 0 else 0.0
+    if packets > 0 and mean_v in (None, 0):
+        mean_v = total_bytes / packets if packets else 0.0
+    if packets <= 0 and (mean_v is None or mean_v == 0):
+        mean_v = 0.0
+    if min_v is None:
+        min_v = mean_v
+    if max_v is None:
+        max_v = mean_v
+    if std_v is None:
+        std_v = 0.0
 
-    payload = _safe_float(base.get("payload_bytes"))
-    payload_ratio = payload / bytes_total if bytes_total > 0 else 0.0
-
-    down_bytes = _safe_float(base.get("down_bytes"))
-    up_bytes = _safe_float(base.get("up_bytes"))
-    down_up_ratio = down_bytes / up_bytes if up_bytes > 0 else 0.0
-
-    burstiness = _safe_float(base.get("burstiness"))
-    if burstiness == 0 and packets > 1:
-        # simple proxy: variance of inter-packet distribution
-        burstiness = min(1.0, packets / max(1.0, duration))
-
-    flow_score = (
-        _safe_float(base.get("entropy"))
-        + _safe_float(base.get("iat_std"))
-        + _safe_float(base.get("flow_psh_flags"))
-    ) / 3.0
-
-    derived = {
-        "duration": duration,
-        "packets": packets,
-        "bytes": bytes_total,
-        "pkts_per_s": pkts_per_s,
-        "bytes_per_s": bytes_per_s,
-        "avg_pkt_size": avg_pkt_size,
-        "payload_ratio": payload_ratio,
-        "burstiness": burstiness,
-        "down_up_ratio": down_up_ratio,
-        "flow_score": flow_score,
+    return {
+        "max": _clean_number(max_v),
+        "min": _clean_number(min_v),
+        "mean": _clean_number(mean_v),
+        "std": _clean_number(std_v),
     }
-    return derived
 
 
-# ---------------------------------------------------------------------------
-#  НОВОЕ: маппинг в 41 фичу под attack/vpn модели
-# ---------------------------------------------------------------------------
+def _compute_iat_stats(data: Mapping[str, object], prefix: str, packets: float, duration: float) -> Dict[str, float]:
+    mean_v = _first_existing(data, [f"{prefix}_iat_mean"], default=None)
+    std_v = _first_existing(data, [f"{prefix}_iat_std"], default=None)
+    max_v = _first_existing(data, [f"{prefix}_iat_max"], default=None)
+    min_v = _first_existing(data, [f"{prefix}_iat_min"], default=None)
+    total_v = _first_existing(data, [f"{prefix}_iat_total"], default=None)
 
-def _build_model_features_41(flow: Mapping[str, object]) -> Dict[str, float]:
-    """
-    Построить dict с 41 фичей, которые ждут RandomForest-модели.
+    count_intervals = max(0.0, packets - 1.0)
+    if count_intervals > 0 and duration > 0 and mean_v in (None, 0):
+        mean_v = duration / count_intervals
+    if total_v in (None, 0) and mean_v not in (None, 0):
+        total_v = mean_v * count_intervals
+    if min_v is None:
+        min_v = mean_v or 0.0
+    if max_v is None:
+        max_v = mean_v or 0.0
+    if std_v is None:
+        std_v = 0.0
 
-    flow — это твой "сырой" словарь потока (то, что летит в pipeline),
-    в нём обычно есть примерно такое:
-        duration, packets, bytes, payload_bytes, down_bytes, up_bytes,
-        proto/sport/dport, iat_std, entropy, и т.д.
+    return {
+        "total": _clean_number(total_v),
+        "mean": _clean_number(mean_v),
+        "std": _clean_number(std_v),
+        "max": _clean_number(max_v),
+        "min": _clean_number(min_v),
+    }
 
-    Мы пробуем аккуратно выцепить всё, что можем, остальное — в нули.
-    """
-    base = dict(flow)
-    derived = _derive_numeric_features(base)
 
-    def g(*keys: str, default: float = 0.0) -> float:
-        """Попробовать взять по нескольким потенциальным именам."""
-        for k in keys:
-            if k in base:
-                return _safe_float(base.get(k))
-            if k in derived:
-                return _safe_float(derived.get(k))
-        return default
+def build_feature_dict(flow: Mapping[str, object]) -> Dict[str, float]:
+    """Return a dict with all 41 model features filled and cleaned."""
+    data: MutableMapping[str, object] = dict(flow or {})
 
-    features: Dict[str, float] = {}
+    # Duration
+    duration = _first_existing(data, ["flow_duration", "duration"], default=None)
+    if duration in (None, 0):
+        start = _first_existing(data, ["first_ts", "start_ts", "start_time"], default=None)
+        end = _first_existing(data, ["last_ts", "end_ts", "end_time"], default=None)
+        if start not in (None, 0) and end not in (None, 0):
+            duration = max(0.0, _clean_number(end) - _clean_number(start))
+    duration = _clean_number(duration)
 
-    # 1. protocol
-    features["protocol"] = g("protocol", "proto", default=0.0)
+    # Packet and byte counters
+    fwd_packets = _first_existing(data, ["total_fwd_packets", "fwd_packets", "src2dst_packets", "up_packets"], default=0.0)
+    bwd_packets = _first_existing(data, ["total_bwd_packets", "bwd_packets", "dst2src_packets", "down_packets"], default=0.0)
+    total_packets_reported = _first_existing(data, ["packets", "total_packets"], default=0.0)
+    if fwd_packets == 0 and bwd_packets == 0 and total_packets_reported > 0:
+        fwd_packets = total_packets_reported / 2.0
+        bwd_packets = total_packets_reported - fwd_packets
+    total_packets = fwd_packets + bwd_packets
 
-    # 2. flow_duration
-    features["flow_duration"] = g("flow_duration", "duration")
-
-    # 3–4. total_fwd_packets / total_bwd_packets
-    packets = g("packets")
-    # если есть направленные — используем их:
-    fwd_pkts = g("total_fwd_packets", "fwd_packets", "src2dst_packets", "up_packets")
-    bwd_pkts = g("total_bwd_packets", "bwd_packets", "dst2src_packets", "down_packets")
-
-    if fwd_pkts == 0 and bwd_pkts == 0 and packets > 0:
-        # если ничего нет — считаем пополам, лучше чем по нулям
-        fwd_pkts = packets / 2.0
-        bwd_pkts = packets - fwd_pkts
-
-    features["total_fwd_packets"] = fwd_pkts
-    features["total_bwd_packets"] = bwd_pkts
-
-    # 5–6. суммы байт вперёд/назад
-    fwd_bytes = g("fwd_bytes", "src2dst_bytes", "up_bytes")
-    bwd_bytes = g("bwd_bytes", "dst2src_bytes", "down_bytes")
-    if fwd_bytes == 0 and bwd_bytes == 0:
-        # fallback — делим общий bytes, если направленных нет
-        total_bytes = g("bytes")
-        if total_bytes > 0:
+    fwd_bytes = _first_existing(data, ["fwd_packets_length_total", "fwd_bytes", "src2dst_bytes", "up_bytes"], default=0.0)
+    bwd_bytes = _first_existing(data, ["bwd_packets_length_total", "bwd_bytes", "dst2src_bytes", "down_bytes"], default=0.0)
+    total_bytes = fwd_bytes + bwd_bytes
+    if total_bytes == 0:
+        total_bytes = _first_existing(data, ["bytes", "total_bytes"], default=0.0)
+        if total_bytes and fwd_bytes == 0 and bwd_bytes == 0:
             fwd_bytes = total_bytes / 2.0
             bwd_bytes = total_bytes - fwd_bytes
-    features["fwd_packets_length_total"] = fwd_bytes
-    features["bwd_packets_length_total"] = bwd_bytes
 
-    # 7–10. fwd_packet_length_* (если нет, оценим через средний размер pacкета)
-    avg_pkt_size = g("avg_packet_size", "avg_pkt_size")
-    features["fwd_packet_length_max"] = g("fwd_pkt_len_max", "src2dst_max_payload", default=avg_pkt_size)
-    features["fwd_packet_length_min"] = g("fwd_pkt_len_min", "src2dst_min_payload", default=avg_pkt_size)
-    features["fwd_packet_length_mean"] = g("fwd_pkt_len_mean", "src2dst_mean_payload", default=avg_pkt_size)
-    features["fwd_packet_length_std"] = g("fwd_pkt_len_std", "src2dst_std_payload", default=0.0)
+    # Packet length statistics per direction
+    fwd_len = _compute_directional_lengths(data, "fwd", fwd_bytes, fwd_packets)
+    bwd_len = _compute_directional_lengths(data, "bwd", bwd_bytes, bwd_packets)
 
-    # 11–14. bwd_packet_length_*
-    features["bwd_packet_length_max"] = g("bwd_pkt_len_max", "dst2src_max_payload", default=avg_pkt_size)
-    features["bwd_packet_length_min"] = g("bwd_pkt_len_min", "dst2src_min_payload", default=avg_pkt_size)
-    features["bwd_packet_length_mean"] = g("bwd_pkt_len_mean", "dst2src_mean_payload", default=avg_pkt_size)
-    features["bwd_packet_length_std"] = g("bwd_pkt_len_std", "dst2src_std_payload", default=0.0)
+    # Overall packet length statistics
+    pkt_min = _first_existing(data, ["packet_length_min", "min_payload", "min_packet_length"], default=None)
+    pkt_max = _first_existing(data, ["packet_length_max", "max_payload", "max_packet_length"], default=None)
+    pkt_mean = _first_existing(data, ["packet_length_mean", "mean_payload"], default=None)
+    pkt_std = _first_existing(data, ["packet_length_std", "std_payload"], default=None)
 
-    # 15–16. flow_*_per_s
-    features["flow_bytes_per_s"] = g("flow_bytes_per_s", "bytes_per_s")
-    features["flow_packets_per_s"] = g("flow_packets_per_s", "pkts_per_s")
+    if pkt_mean in (None, 0) and total_packets > 0:
+        pkt_mean = total_bytes / total_packets
+    if pkt_min is None or pkt_min == 0:
+        pkt_min = min(fwd_len["min"], bwd_len["min"]) if total_packets > 0 else 0.0
+    if pkt_max is None or pkt_max == 0:
+        pkt_max = max(fwd_len["max"], bwd_len["max"]) if total_packets > 0 else 0.0
+    if pkt_std is None:
+        pkt_std = 0.0
+    pkt_variance = _clean_number(pkt_std) ** 2
 
-    # 17–20. flow_iat_*
-    features["flow_iat_mean"] = g("flow_iat_mean", "iat_mean")
-    features["flow_iat_std"] = g("flow_iat_std", "iat_std")
-    features["flow_iat_max"] = g("flow_iat_max")
-    features["flow_iat_min"] = g("flow_iat_min")
+    avg_packet_size = total_bytes / total_packets if total_packets > 0 else 0.0
 
-    # 21–25. fwd_iat_*
-    features["fwd_iat_total"] = g("fwd_iat_total", "src2dst_iat_total")
-    features["fwd_iat_mean"] = g("fwd_iat_mean", "src2dst_iat_mean")
-    features["fwd_iat_std"] = g("fwd_iat_std", "src2dst_iat_std")
-    features["fwd_iat_max"] = g("fwd_iat_max", "src2dst_iat_max")
-    features["fwd_iat_min"] = g("fwd_iat_min", "src2dst_iat_min")
+    # Rates
+    flow_packets_per_s = total_packets / duration if duration > 0 else total_packets
+    flow_bytes_per_s = total_bytes / duration if duration > 0 else total_bytes
 
-    # 26–30. bwd_iat_*
-    features["bwd_iat_total"] = g("bwd_iat_total", "dst2src_iat_total")
-    features["bwd_iat_mean"] = g("bwd_iat_mean", "dst2src_iat_mean")
-    features["bwd_iat_std"] = g("bwd_iat_std", "dst2src_iat_std")
-    features["bwd_iat_max"] = g("bwd_iat_max", "dst2src_iat_max")
-    features["bwd_iat_min"] = g("bwd_iat_min", "dst2src_iat_min")
+    # IAT stats
+    flow_iat = _compute_iat_stats(data, "flow", total_packets, duration)
+    fwd_iat = _compute_iat_stats(data, "fwd", fwd_packets, duration)
+    bwd_iat = _compute_iat_stats(data, "bwd", bwd_packets, duration)
 
-    # 31. down_up_ratio
-    #    либо уже есть, либо считаем заново
-    dur_ratio = g("down_up_ratio")
-    if dur_ratio == 0.0:
-        down_bytes = g("down_bytes")
-        up_bytes = g("up_bytes")
-        dur_ratio = down_bytes / up_bytes if up_bytes > 0 else 0.0
-    features["down_up_ratio"] = dur_ratio
+    # Ratio
+    down_up_ratio = 0.0
+    if fwd_bytes > 0:
+        down_up_ratio = bwd_bytes / fwd_bytes
 
-    # 32–37. packet_length_* + variance + avg_packet_size
-    pkt_min = g("packet_length_min", "min_payload")
-    pkt_max = g("packet_length_max", "max_payload")
-    pkt_mean = g("packet_length_mean", "mean_payload", default=avg_pkt_size)
-    pkt_std = g("packet_length_std", "std_payload")
-    if pkt_std == 0.0 and pkt_mean == 0.0 and avg_pkt_size > 0:
-        pkt_mean = avg_pkt_size
+    # Ports and TCP windows
+    destination_port = _first_existing(data, ["destination_port", "dport", "dst_port"], default=0.0)
+    source_port = _first_existing(data, ["source_port", "sport", "src_port"], default=0.0)
+    init_win_bytes_forward = _first_existing(data, ["init_win_bytes_forward", "init_win_fwd"], default=0.0)
+    init_win_bytes_backward = _first_existing(data, ["init_win_bytes_backward", "init_win_bwd"], default=0.0)
 
-    features["packet_length_min"] = pkt_min
-    features["packet_length_max"] = pkt_max
-    features["packet_length_mean"] = pkt_mean
-    features["packet_length_std"] = pkt_std
-    features["packet_length_variance"] = pkt_std ** 2
-    features["avg_packet_size"] = avg_pkt_size
+    protocol = _first_existing(data, ["protocol"], default=None)
+    if protocol in (None, 0):
+        protocol = _proto_to_number(data.get("proto"))
+    else:
+        protocol = _proto_to_number(protocol)
 
-    # 38–39. порты
-    features["destination_port"] = g("destination_port", "dport", "dst_port")
-    features["source_port"] = g("source_port", "sport", "src_port")
+    features: Dict[str, float] = {
+        "protocol": protocol,
+        "flow_duration": duration,
+        "total_fwd_packets": fwd_packets,
+        "total_bwd_packets": bwd_packets,
+        "fwd_packets_length_total": fwd_bytes,
+        "bwd_packets_length_total": bwd_bytes,
+        "fwd_packet_length_max": fwd_len["max"],
+        "fwd_packet_length_min": fwd_len["min"],
+        "fwd_packet_length_mean": fwd_len["mean"],
+        "fwd_packet_length_std": fwd_len["std"],
+        "bwd_packet_length_max": bwd_len["max"],
+        "bwd_packet_length_min": bwd_len["min"],
+        "bwd_packet_length_mean": bwd_len["mean"],
+        "bwd_packet_length_std": bwd_len["std"],
+        "flow_bytes_per_s": flow_bytes_per_s,
+        "flow_packets_per_s": flow_packets_per_s,
+        "flow_iat_mean": flow_iat["mean"],
+        "flow_iat_std": flow_iat["std"],
+        "flow_iat_max": flow_iat["max"],
+        "flow_iat_min": flow_iat["min"],
+        "fwd_iat_total": fwd_iat["total"],
+        "fwd_iat_mean": fwd_iat["mean"],
+        "fwd_iat_std": fwd_iat["std"],
+        "fwd_iat_max": fwd_iat["max"],
+        "fwd_iat_min": fwd_iat["min"],
+        "bwd_iat_total": bwd_iat["total"],
+        "bwd_iat_mean": bwd_iat["mean"],
+        "bwd_iat_std": bwd_iat["std"],
+        "bwd_iat_max": bwd_iat["max"],
+        "bwd_iat_min": bwd_iat["min"],
+        "down_up_ratio": down_up_ratio,
+        "packet_length_min": _clean_number(pkt_min),
+        "packet_length_max": _clean_number(pkt_max),
+        "packet_length_mean": _clean_number(pkt_mean),
+        "packet_length_std": _clean_number(pkt_std),
+        "packet_length_variance": pkt_variance,
+        "avg_packet_size": _clean_number(avg_packet_size),
+        "destination_port": destination_port,
+        "source_port": source_port,
+        "init_win_bytes_forward": init_win_bytes_forward,
+        "init_win_bytes_backward": init_win_bytes_backward,
+    }
 
-    # 40–41. init window bytes
-    features["init_win_bytes_forward"] = g("init_win_bytes_forward")
-    features["init_win_bytes_backward"] = g("init_win_bytes_backward")
-
-    # Гарантируем, что ВСЕ 41 фича присутствует
+    # Ensure all fields exist and are finite
     for name in MODEL_FEATURES_41:
-        features.setdefault(name, 0.0)
+        features[name] = _clean_number(features.get(name, 0.0))
 
     return features
 
 
-# ---------------------------------------------------------------------------
-#  ОСНОВНАЯ ФУНКЦИЯ extract_features
-# ---------------------------------------------------------------------------
-
-def extract_features(
-    flow: Mapping[str, object],
-    numeric_features: Sequence[str] = NUMERIC_FEATURES_DEFAULT,
-    hash_features: Sequence[str] = HASH_FEATURES,
-    num_hash_buckets: int = 32,
-    expected_order: Optional[Sequence[str]] = None,
-) -> FeatureVector:
-    """
-    Build a deterministic feature vector from heterogeneous flow data.
-
-    Режимы:
-      • если expected_order задан → строим фичи под attack/vpn модели
-      • иначе → старый режим (duration/packets/... + hash_*)
-    """
-
-    # === НОВЫЙ РЕЖИМ: под attack/vpn RandomForest модели ===
-    if expected_order:
-        # 1) Строим полный набор 41 фич (или больше, если нужно)
-        full_features = _build_model_features_41(flow)
-
-        # 2) Отдаём в нужном порядке (expected_order обычно == MODEL_FEATURES_41)
-        ordered_values: List[float] = []
-        for name in expected_order:
-            ordered_values.append(_safe_float(full_features.get(name, 0.0)))
-        return FeatureVector(names=list(expected_order), values=np.array(ordered_values, dtype=float))
-
-    # === СТАРЫЙ РЕЖИМ (generic numeric + hash features) ===
-    base_numeric = _derive_numeric_features(flow)
-    vector_values: List[float] = []
-    vector_names: List[str] = []
-
-    for name in numeric_features:
-        vector_names.append(name)
-        vector_values.append(float(base_numeric.get(name, _safe_float(flow.get(name)))))
-
-    for feature in hash_features:
-        hashed_name = f"hash_{feature}"
-        vector_names.append(hashed_name)
-        vector_values.append(_hash_feature(flow.get(feature), num_hash_buckets))
-
-    return FeatureVector(names=vector_names, values=np.array(vector_values, dtype=float))
+def extract_features(flow: Mapping[str, object], expected_order: Optional[Sequence[str]] = None) -> FeatureVector:
+    feature_dict = build_feature_dict(flow)
+    order = list(expected_order) if expected_order else list(MODEL_FEATURES_41)
+    values = np.array([feature_dict.get(name, 0.0) for name in order], dtype=float)
+    return FeatureVector(names=order, values=values)
 
 
 # ---------------------------------------------------------------------------
-#  MERGE + REORDER HELPERS (как раньше)
+# MERGE HELPERS
 # ---------------------------------------------------------------------------
 
 def merge_feature_sources(*sources: Mapping[str, object]) -> Dict[str, object]:
-    """Merge multiple dictionaries preferring the later ones."""
     merged: Dict[str, object] = {}
     for src in sources:
         if not src:
@@ -412,12 +315,8 @@ def merge_feature_sources(*sources: Mapping[str, object]) -> Dict[str, object]:
 
 
 def ensure_feature_order(vector: FeatureVector, order: Optional[Sequence[str]]) -> FeatureVector:
-    """Re-order existing vector to match expected feature order."""
     if not order:
         return vector
     index = {name: idx for idx, name in enumerate(vector.names)}
-    values = np.array(
-        [vector.values[index.get(name, -1)] if name in index else 0.0 for name in order],
-        dtype=float,
-    )
+    values = np.array([vector.values[index.get(name, -1)] if name in index else 0.0 for name in order], dtype=float)
     return FeatureVector(names=list(order), values=values)
