@@ -18,12 +18,14 @@ from .streaming import (
     init_streaming,
     stop_streaming,
 )
+
 from .nfstream_helper import NFSTREAM_AVAILABLE, iterate_flows_from_streamer, make_streamer
 from .session_bridge import (
     finish_capture_session,
     log_capture_event,
     start_capture_session,
 )
+
 
 log = logging.getLogger('ta.capture')
 
