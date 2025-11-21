@@ -1,231 +1,233 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>IntelliSniff — Центр мониторинга трафика</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="{{ url_for('static', path='app.js') }}"></script>
+    <meta charset="utf-8">
+    <title>IntelliSniff — Центр мониторинга трафика</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="{{ url_for('static', path='app.js') }}"></script>
 </head>
 <body>
-  <div id="authOverlay" class="auth-overlay hidden">
+<div id="authOverlay" class="auth-overlay hidden">
     <form id="authForm" class="auth-card">
-      <h2>Вход в IntelliSniff</h2>
-      <p class="auth-subtitle">Используйте учётную запись администратора (HTTP Basic).</p>
-      <label>
-        Логин
-        <input type="text" id="authLogin" autocomplete="username" required>
-      </label>
-      <label>
-        Пароль
-        <input type="password" id="authPassword" autocomplete="current-password" required>
-      </label>
-      <button type="submit">Войти</button>
-      <p class="auth-hint">По умолчанию: <code>admin / changeme</code>. Настройте переменные окружения <code>TA_USER</code>, <code>TA_PASS</code>.</p>
+        <h2>Вход в IntelliSniff</h2>
+        <p class="auth-subtitle">Используйте учётную запись администратора (HTTP Basic).</p>
+        <label>
+            Логин
+            <input type="text" id="authLogin" autocomplete="username" required>
+        </label>
+        <label>
+            Пароль
+            <input type="password" id="authPassword" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Войти</button>
+        <p class="auth-hint">По умолчанию: <code>admin / changeme</code>. Настройте переменные окружения
+            <code>TA_USER</code>, <code>TA_PASS</code>.</p>
     </form>
-  </div>
+</div>
 
-  <header class="page-header">
+<header class="page-header">
     <div>
-      <h1>IntelliSniff</h1>
-      <p class="subtitle">Интерактивная панель анализа сетевых потоков</p>
+        <h1>IntelliSniff</h1>
+        <p class="subtitle">Интерактивная панель анализа сетевых потоков</p>
     </div>
     <div class="header-meta">
-      <div id="statusBadge" class="status-badge status-idle">Ожидание</div>
-      <div class="user-meta">Ваш IP: {{ request.client.host }}</div>
+        <div id="statusBadge" class="status-badge status-idle">Ожидание</div>
+        <div class="user-meta">Ваш IP: {{ request.client.host }}</div>
+        <a href="/logs" class="nav-btn">📘 Журнал</a>
     </div>
-  </header>
+</header>
 
-  <section class="controls-card">
+<section class="controls-card">
     <div class="controls-grid">
-      <label>
-        Интерфейс
-        <select id="iface">
-          <option value="">Авто</option>
-        </select>
-      </label>
-      <label>
-        BPF-фильтр
-        <input id="bpf" placeholder="tcp port 80">
-      </label>
-      <label>
-        Таймаут потока (с)
-        <input id="flowTimeout" type="number" min="1" max="600" step="1" value="30">
-      </label>
-      <label class="checkbox">
-        <input type="checkbox" id="use_nfstream"> Глубокий анализ NFStream
-      </label>
-      <div class="buttons">
-        <button id="startBtn" class="primary">Запустить захват</button>
-        <button id="stopBtn" class="ghost">Остановить</button>
-      </div>
-      <div class="buttons">
-        <button id="trainBtn" class="ghost">Переобучить модель</button>
-        <button id="csvBtn" class="ghost">Экспорт CSV</button>
-        <button id="pdfBtn" class="ghost">Экспорт PDF</button>
-      </div>
+        <label>
+            Интерфейс
+            <select id="iface">
+                <option value="">Авто</option>
+            </select>
+        </label>
+        <label>
+            BPF-фильтр
+            <input id="bpf" placeholder="tcp port 80">
+        </label>
+        <label>
+            Таймаут потока (с)
+            <input id="flowTimeout" type="number" min="1" max="600" step="1" value="30">
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" id="use_nfstream"> Глубокий анализ NFStream
+        </label>
+        <div class="buttons">
+            <button id="startBtn" class="primary">Запустить захват</button>
+            <button id="stopBtn" class="ghost">Остановить</button>
+        </div>
+        <div class="buttons">
+            <button id="trainBtn" class="ghost">Переобучить модель</button>
+            <button id="csvBtn" class="ghost">Экспорт CSV</button>
+            <button id="pdfBtn" class="ghost">Экспорт PDF</button>
+        </div>
     </div>
     <div id="statusDetails" class="status-details"></div>
-  </section>
+</section>
 
-  <section class="ml-section">
+<section class="ml-section">
     <div class="ml-header">
-      <h2>ML-инфраструктура</h2>
-      <label class="ml-toggle">
-        <input type="checkbox" id="autoUpdateToggle" checked>
-        <span>Автообновление моделей</span>
-      </label>
+        <h2>ML-инфраструктура</h2>
+        <label class="ml-toggle">
+            <input type="checkbox" id="autoUpdateToggle" checked>
+            <span>Автообновление моделей</span>
+        </label>
     </div>
     <div class="ml-grid" id="mlGrid">
-      <div class="ml-card" data-task="attack">
-        <div class="ml-card-header">
-          <h3>Детекция атак</h3>
-          <span class="ml-active" data-role="active">—</span>
+        <div class="ml-card" data-task="attack">
+            <div class="ml-card-header">
+                <h3>Детекция атак</h3>
+                <span class="ml-active" data-role="active">—</span>
+            </div>
+            <label>Версия модели
+                <select data-role="versions"></select>
+            </label>
+            <div class="ml-actions">
+                <button data-action="switch" class="primary">Активировать</button>
+                <button data-action="validate" class="ghost">Валидировать</button>
+            </div>
+            <div class="ml-metrics" data-role="metrics"></div>
+            <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
         </div>
-        <label>Версия модели
-          <select data-role="versions"></select>
-        </label>
-        <div class="ml-actions">
-          <button data-action="switch" class="primary">Активировать</button>
-          <button data-action="validate" class="ghost">Валидировать</button>
+        <div class="ml-card" data-task="vpn">
+            <div class="ml-card-header">
+                <h3>VPN классификация</h3>
+                <span class="ml-active" data-role="active">—</span>
+            </div>
+            <label>Версия модели
+                <select data-role="versions"></select>
+            </label>
+            <div class="ml-actions">
+                <button data-action="switch" class="primary">Активировать</button>
+                <button data-action="validate" class="ghost">Валидировать</button>
+            </div>
+            <div class="ml-metrics" data-role="metrics"></div>
+            <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
         </div>
-        <div class="ml-metrics" data-role="metrics"></div>
-        <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
-      </div>
-      <div class="ml-card" data-task="vpn">
-        <div class="ml-card-header">
-          <h3>VPN классификация</h3>
-          <span class="ml-active" data-role="active">—</span>
+        <div class="ml-card" data-task="anomaly">
+            <div class="ml-card-header">
+                <h3>Аномалии</h3>
+                <span class="ml-active" data-role="active">—</span>
+            </div>
+            <label>Версия модели
+                <select data-role="versions"></select>
+            </label>
+            <div class="ml-actions">
+                <button data-action="switch" class="primary">Активировать</button>
+                <button data-action="validate" class="ghost">Валидировать</button>
+            </div>
+            <div class="ml-metrics" data-role="metrics"></div>
+            <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
         </div>
-        <label>Версия модели
-          <select data-role="versions"></select>
-        </label>
-        <div class="ml-actions">
-          <button data-action="switch" class="primary">Активировать</button>
-          <button data-action="validate" class="ghost">Валидировать</button>
-        </div>
-        <div class="ml-metrics" data-role="metrics"></div>
-        <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
-      </div>
-      <div class="ml-card" data-task="anomaly">
-        <div class="ml-card-header">
-          <h3>Аномалии</h3>
-          <span class="ml-active" data-role="active">—</span>
-        </div>
-        <label>Версия модели
-          <select data-role="versions"></select>
-        </label>
-        <div class="ml-actions">
-          <button data-action="switch" class="primary">Активировать</button>
-          <button data-action="validate" class="ghost">Валидировать</button>
-        </div>
-        <div class="ml-metrics" data-role="metrics"></div>
-        <div class="ml-drift" data-role="drift">Дрейф не обнаружен</div>
-      </div>
     </div>
     <div class="ml-predictions">
-      <div class="ml-predictions-header">
-        <h3>Последние предсказания моделей</h3>
-        <button id="refreshMl" class="ghost">Обновить</button>
-      </div>
-      <div class="ml-predictions-table">
-        <table id="mlPredictions">
-          <thead>
-            <tr>
-              <th>Время</th>
-              <th>Задача</th>
-              <th>Метка</th>
-              <th>Уверенность</th>
-              <th>Версия</th>
-              <th>Объяснение</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+        <div class="ml-predictions-header">
+            <h3>Последние предсказания моделей</h3>
+            <button id="refreshMl" class="ghost">Обновить</button>
+        </div>
+        <div class="ml-predictions-table">
+            <table id="mlPredictions">
+                <thead>
+                <tr>
+                    <th>Время</th>
+                    <th>Задача</th>
+                    <th>Метка</th>
+                    <th>Уверенность</th>
+                    <th>Версия</th>
+                    <th>Объяснение</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
-  </section>
+</section>
 
-  <section class="cards-grid">
+<section class="cards-grid">
     <div class="info-card">
-      <h3>Всего потоков</h3>
-      <div class="metric" id="totalFlows">0</div>
-      <span class="hint">Количество потоков за последнюю сессию</span>
+        <h3>Всего потоков</h3>
+        <div class="metric" id="totalFlows">0</div>
+        <span class="hint">Количество потоков за последнюю сессию</span>
     </div>
     <div class="info-card">
-      <h3>Подозрительные</h3>
-      <div class="metric warning" id="suspiciousFlows">0</div>
-      <span class="hint">Метки, отличные от "web" / "benign"</span>
+        <h3>Подозрительные</h3>
+        <div class="metric warning" id="suspiciousFlows">0</div>
+        <span class="hint">Метки, отличные от "web" / "benign"</span>
     </div>
     <div class="info-card">
-      <h3>Средняя пропускная способность</h3>
-      <div class="metric" id="bandwidth">0 КБ/с</div>
-      <span class="hint">По последним потокам</span>
+        <h3>Средняя пропускная способность</h3>
+        <div class="metric" id="bandwidth">0 КБ/с</div>
+        <span class="hint">По последним потокам</span>
     </div>
     <div class="info-card">
-      <h3>Последний поток</h3>
-      <div class="metric" id="lastFlowLabel">—</div>
-      <span class="hint" id="lastFlowSummary">Ожидание данных</span>
+        <h3>Последний поток</h3>
+        <div class="metric" id="lastFlowLabel">—</div>
+        <span class="hint" id="lastFlowSummary">Ожидание данных</span>
     </div>
-  </section>
+</section>
 
-  <section class="charts-grid">
+<section class="charts-grid">
     <div class="chart-card">
-      <div class="chart-header">
-        <h3>Распределение меток</h3>
-        <select id="labelFilter">
-          <option value="all" selected>Все метки</option>
-        </select>
-      </div>
-      <canvas id="labelsChart" width="420" height="260"></canvas>
-    </div>
-    <div class="chart-card">
-      <h3>Интенсивность пакетов</h3>
-      <canvas id="trafficChart" width="420" height="260"></canvas>
+        <div class="chart-header">
+            <h3>Распределение меток</h3>
+            <select id="labelFilter">
+                <option value="all" selected>Все метки</option>
+            </select>
+        </div>
+        <canvas id="labelsChart" width="420" height="260"></canvas>
     </div>
     <div class="chart-card">
-      <h3>Топ направлений</h3>
-      <canvas id="destChart" width="420" height="260"></canvas>
+        <h3>Интенсивность пакетов</h3>
+        <canvas id="trafficChart" width="420" height="260"></canvas>
     </div>
-  </section>
+    <div class="chart-card">
+        <h3>Топ направлений</h3>
+        <canvas id="destChart" width="420" height="260"></canvas>
+    </div>
+</section>
 
-  <section class="table-card">
+<section class="table-card">
     <div class="table-header">
-      <h3>Последние потоки</h3>
-      <div class="table-controls">
-        <label>Поиск <input type="search" id="tableSearch" placeholder="IP, порт или метка"></label>
-        <span id="tableCounter">0 записей</span>
-      </div>
+        <h3>Последние потоки</h3>
+        <div class="table-controls">
+            <label>Поиск <input type="search" id="tableSearch" placeholder="IP, порт или метка"></label>
+            <span id="tableCounter">0 записей</span>
+        </div>
     </div>
     <div class="table-wrapper">
-      <table id="flowsTable">
-        <thead>
-          <tr>
-            <th>Время</th>
-            <th>Источник</th>
-            <th>Назначение</th>
-            <th>Порты</th>
-            <th>Протокол</th>
-            <th>Метка</th>
-            <th>Вероятность</th>
-            <th>Пакеты</th>
-            <th>Байты</th>
-            <th>Сводка</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <table id="flowsTable">
+            <thead>
+            <tr>
+                <th>Время</th>
+                <th>Источник</th>
+                <th>Назначение</th>
+                <th>Порты</th>
+                <th>Протокол</th>
+                <th>Метка</th>
+                <th>Вероятность</th>
+                <th>Пакеты</th>
+                <th>Байты</th>
+                <th>Сводка</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
-  </section>
+</section>
 
-  <footer class="page-footer">
+<footer class="page-footer">
     <div>
-      Версия панели IntelliSniff · NFStream: <span id="nfStatus">—</span>
+        Версия панели IntelliSniff · NFStream: <span id="nfStatus">—</span>
     </div>
     <div>
-      При возникновении проблем проверьте настройки прав доступа к сетевому интерфейсу и модель <code>data/model.joblib</code>.
+        При возникновении проблем проверьте настройки прав доступа к сетевому интерфейсу и модель <code>data/model.joblib</code>.
     </div>
-  </footer>
+</footer>
 </body>
 </html>
