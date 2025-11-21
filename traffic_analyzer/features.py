@@ -1,6 +1,7 @@
-"""
-Feature bridge between streaming.py (snake_case) and ML model (CICFlowMeter-style).
-Ensures full compatibility with old models AND new streaming engine.
+"""Feature bridge for streaming flows.
+
+Ensures full compatibility with old models AND the new streaming engine by
+providing a consistent feature dictionary for the ML predictor.
 """
 
 from __future__ import annotations
@@ -62,6 +63,7 @@ def extract_features_from_flow(flow: Dict[str, Any]) -> Dict[str, float]:
     # 2. DERIVED МЕТРИКИ
     # ------------------------------------------
     duration = base.get("flow_duration", base.get("duration", 0.0))
+    base.setdefault("duration", duration)
     packets = base.get("packets", 0.0)
     bytes_total = base.get("bytes", 0.0)
 

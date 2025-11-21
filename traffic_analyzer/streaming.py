@@ -9,6 +9,7 @@ from .features import extract_features_from_flow
 from traffic_analyzer.flow_logger import save_flow
 from .ml_runtime import get_predictor, get_model_manager
 from .event_bus import publish
+from .session_bridge import log_streaming_stopped, record_flow_emission
 
 log = logging.getLogger('ta.streaming')
 FlowKey = namedtuple('FlowKey', ['src', 'dst', 'sport', 'dport', 'proto'])
@@ -325,6 +326,10 @@ def stop_streaming():
         _flush_thread.join(timeout=2)
     _flush_thread = None
     _flush_all()
+    try:
+        log_streaming_stopped()
+    except Exception:
+        log.warning("Failed to log streaming stop", exc_info=True)
 
 
 def _flow_flush_loop():
@@ -457,7 +462,9 @@ def _emit_flow(key):
     predictor = get_predictor()
 
     try:
-        features_payload = {**feats, **hints, 'duration': feats.get('duration'), 'iface': flow.iface}
+        features_payload = {**feats, **hints, 'iface': flow.iface}
+        if 'duration' not in features_payload:
+            features_payload['duration'] = features_payload.get('flow_duration', feats.get('duration'))
         res = predictor.predict(features_payload, task='attack')
     except Exception:
         log.exception("Model prediction error")
@@ -507,6 +514,11 @@ def _emit_flow(key):
         'model_version': res.get('version'),
         'model_task': res.get('task'),
     }
+
+    try:
+        record_flow_emission(key, flow, res)
+    except Exception:
+        log.warning("Session flow logging failed", exc_info=True)
 
     try:
         save_flow(flow_dict)

@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 from . import capture, event_bus, storage
 from .ml_runtime import get_auto_updater, get_drift_detector, get_model_manager, get_predictor
 from .auth import get_current_username
+from app.api import get_router as get_app_router
 
 
 # ==========================
@@ -84,6 +85,8 @@ static_dir = os.path.join(os.path.dirname(__file__), "..", "web", "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+app.include_router(get_app_router(), prefix="/api")
+
 
 # ==========================
 #  WEBSOCKET BROKER
@@ -139,6 +142,18 @@ def health():
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
     return templates.TemplateResponse("dashboard_full.html", {"request": request})
+
+
+@app.get("/logs", response_class=HTMLResponse)
+def logs_page(request: Request):
+    return templates.TemplateResponse("logs.html", {"request": request})
+
+
+@app.get("/logs/session/{session_id}", response_class=HTMLResponse)
+def logs_session_page(request: Request, session_id: int):
+    return templates.TemplateResponse(
+        "logs_session.html", {"request": request, "session_id": session_id}
+    )
 
 
 @app.post("/start_capture")
