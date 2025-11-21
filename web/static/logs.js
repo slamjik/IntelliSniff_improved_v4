@@ -17,6 +17,72 @@ function fmtDate(value) {
   });
 }
 
+function roundDisplayNumber(value) {
+  if (value === null || value === undefined) return value;
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  const abs = Math.abs(num);
+  const digits = abs >= 100 ? 0 : abs >= 1 ? 2 : 3;
+  return Number(num.toFixed(digits));
+}
+
+function truncateString(value, maxLen = 60) {
+  if (typeof value !== 'string') return value;
+  return value.length > maxLen ? `${value.slice(0, maxLen - 1)}…` : value;
+}
+
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeJsonValue(value, { truncateStrings = false } = {}) {
+  if (value === undefined) return '—';
+  if (value === null) return null;
+  if (typeof value === 'number') return roundDisplayNumber(value);
+  if (typeof value === 'string') return truncateStrings ? truncateString(value) : value;
+  if (typeof value === 'boolean') return value;
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map((item) => sanitizeJsonValue(item, { truncateStrings }));
+  if (typeof value === 'object') {
+    const normalized = {};
+    Object.entries(value).forEach(([k, v]) => {
+      normalized[k] = sanitizeJsonValue(v, { truncateStrings });
+    });
+    return normalized;
+  }
+  return String(value);
+}
+
+function formatInlineValue(value) {
+  if (value === null) return 'null';
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (typeof value === 'number') return value.toString();
+  if (typeof value === 'string') return truncateString(value);
+  const json = JSON.stringify(value);
+  return truncateString(json);
+}
+
+function formatJsonInline(obj) {
+  if (!obj || typeof obj !== 'object') {
+    return escapeHtml(formatInlineValue(sanitizeJsonValue(obj, { truncateStrings: true })) || '—');
+  }
+  const sanitized = sanitizeJsonValue(obj, { truncateStrings: true });
+  const lines = Object.entries(sanitized).map(([key, val]) => `${escapeHtml(key)}: ${escapeHtml(formatInlineValue(val))}`);
+  return lines.length ? lines.join('<br>') : '—';
+}
+
+function formatJsonPretty(obj) {
+  const sanitized = sanitizeJsonValue(obj, { truncateStrings: false });
+  const pretty = JSON.stringify(sanitized, (k, v) => (typeof v === 'number' ? roundDisplayNumber(v) : v), 2);
+  return `<pre class="json-pretty">${escapeHtml(pretty || '—')}</pre>`;
+}
+
 function ensureAuth() {
   const token = sessionStorage.getItem('taAuth');
   if (token) {
@@ -82,47 +148,6 @@ function translateKey(key) {
     label: 'Метка',
   };
   return mapping[key] || key;
-}
-
-function shorten(value) {
-  if (value === undefined || value === null) return '';
-  const str = String(value);
-  if (str.length > 10) return `${str.slice(0, 10)}…`;
-  return str;
-}
-
-function payloadSummary(payload) {
-  if (!payload || typeof payload !== 'object') return '—';
-  const keys = ['src', 'dst', 'proto', 'bytes', 'packets', 'label', 'score'];
-  const parts = [];
-  keys.forEach((k) => {
-    if (payload[k] !== undefined && payload[k] !== null) {
-      parts.push(`${translateKey(k)}: ${payload[k]}`);
-    }
-  });
-  if (parts.length) return parts.join(' · ');
-  const asString = JSON.stringify(payload);
-  return asString.length > 120 ? `${asString.slice(0, 120)}…` : asString;
-}
-
-function renderDetails(payload) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'details-card';
-  const grid = document.createElement('div');
-  grid.className = 'details-kv';
-  if (payload && typeof payload === 'object') {
-    Object.entries(payload).forEach(([k, v]) => {
-      const item = document.createElement('div');
-      item.innerHTML = `<span>${translateKey(k)}:</span> ${shorten(v)}`;
-      grid.appendChild(item);
-    });
-  } else {
-    const item = document.createElement('div');
-    item.textContent = '—';
-    grid.appendChild(item);
-  }
-  wrapper.appendChild(grid);
-  return wrapper;
 }
 
 async function loadUsers() {
@@ -193,7 +218,7 @@ function renderEvents() {
     row.appendChild(typeTd);
 
     const descTd = document.createElement('td');
-    descTd.textContent = payloadSummary(event.payload);
+    descTd.innerHTML = formatJsonInline(event.payload);
     row.appendChild(descTd);
 
     const actionTd = document.createElement('td');
@@ -211,7 +236,10 @@ function renderEvents() {
     detailsRow.className = 'hidden';
     const detailsTd = document.createElement('td');
     detailsTd.colSpan = 5;
-    detailsTd.appendChild(renderDetails(event.payload));
+    const detailsWrapper = document.createElement('div');
+    detailsWrapper.className = 'details-card';
+    detailsWrapper.innerHTML = formatJsonPretty(event.payload);
+    detailsTd.appendChild(detailsWrapper);
     detailsRow.appendChild(detailsTd);
 
     body.appendChild(row);
@@ -264,7 +292,7 @@ function renderSessionActions(actions) {
     const type = document.createElement('td');
     type.innerHTML = `<span class="event-badge ${badgeClass(a.name)}">${a.name}</span>`;
     const desc = document.createElement('td');
-    desc.textContent = payloadSummary(a.payload);
+    desc.innerHTML = formatJsonInline(a.payload);
     row.appendChild(time);
     row.appendChild(type);
     row.appendChild(desc);
