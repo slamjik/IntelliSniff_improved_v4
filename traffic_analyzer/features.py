@@ -1,6 +1,7 @@
-"""
-Feature bridge between streaming.py (snake_case) and ML model (CICFlowMeter-style).
-Ensures full compatibility with old models AND new streaming engine.
+"""Feature bridge for streaming flows.
+
+Ensures full compatibility with old models AND the new streaming engine by
+providing a consistent feature dictionary for the ML predictor.
 """
 
 from __future__ import annotations

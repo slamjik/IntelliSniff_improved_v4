@@ -1,12 +1,30 @@
+from __future__ import annotations
+
 import logging
+import socket
 import threading
 import time
-import socket
 from typing import Iterable, Optional
+
 import psutil
 
-from .streaming import handle_packet, init_streaming, stop_streaming, _flows, Flow, _emit_flow, _normalise_flow_key, FlowKey
-from .nfstream_helper import NFSTREAM_AVAILABLE, make_streamer, iterate_flows_from_streamer
+from .streaming import (
+    Flow,
+    FlowKey,
+    _emit_flow,
+    _flows,
+    _normalise_flow_key,
+    handle_packet,
+    init_streaming,
+    stop_streaming,
+)
+
+from .nfstream_helper import (
+    NFSTREAM_AVAILABLE,
+    make_streamer,
+    iterate_flows_from_streamer,
+)
+
 
 log = logging.getLogger('ta.capture')
 

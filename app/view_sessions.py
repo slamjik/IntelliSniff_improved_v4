@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Optional
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
-from rich import box
 
 from sqlalchemy.orm import joinedload
 
-from db import SessionLocal
-from models import SessionLog, ActionLog
+from app.db import SessionLocal
+from app.models import ActionLog, SessionLog
 
 console = Console()
 

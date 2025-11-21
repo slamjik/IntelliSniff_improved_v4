@@ -37,7 +37,9 @@ flow_logger.py — боевой логгер сетевых потоков в Po
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+=======
+
 import logging
 import threading
 import time
@@ -49,7 +51,6 @@ from sqlalchemy.exc import SQLAlchemyError
 # Важно: импортируем твои готовые объекты
 from app.db import SessionLocal
 from app.models import Flow
-from sqlalchemy import text
 
 log = logging.getLogger("ta.flow_logger")
 
@@ -174,15 +175,10 @@ class FlowLogger:
         """
         # === 1) Чистим по возрасту ===
         if self._max_age_hours is not None:
-            cutoff_ts_ms = int(
-                (time.time() - float(self._max_age_hours) * 3600.0) * 1000
-            )
+          
+            cutoff_dt = datetime.now(timezone.utc) - timedelta(hours=float(self._max_age_hours))
 
-            # ВАЖНО: ts TIMESTAMP → сравниваем через TO_TIMESTAMP()
-            db_session.execute(
-                text("DELETE FROM flows WHERE ts < TO_TIMESTAMP(:cut/1000.0)")
-                .bindparams(cut=cutoff_ts_ms)
-            )
+            db_session.execute(delete(Flow).where(Flow.ts < cutoff_dt))
 
         # === 2) Чистим по количеству ===
         if self._max_rows and self._max_rows > 0:
