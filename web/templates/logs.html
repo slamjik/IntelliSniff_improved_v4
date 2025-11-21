@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>IntelliSniff — Журнал</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+  <script defer src="{{ url_for('static', path='logs.js') }}"></script>
+</head>
+<body data-page="logs">
+  <div id="authOverlay" class="auth-overlay hidden">
+    <form id="authForm" class="auth-card">
+      <h2>Вход в IntelliSniff</h2>
+      <p class="auth-subtitle">Используйте учётную запись администратора (HTTP Basic).</p>
+      <label>
+        Логин
+        <input type="text" id="authLogin" autocomplete="username" required>
+      </label>
+      <label>
+        Пароль
+        <input type="password" id="authPassword" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Войти</button>
+      <p class="auth-hint">По умолчанию: <code>admin / changeme</code>.</p>
+    </form>
+  </div>
+
+  <div class="logs-layout">
+    <div class="logs-header">
+      <div class="logs-title">
+        <a href="/dashboard" class="back-link">← Вернуться</a>
+        <h1>История запусков и событий системы</h1>
+        <div class="logs-subtitle">Сессии, действия и события потоковой обработки в едином журнале</div>
+      </div>
+      <div class="header-meta">
+        <a class="log-button" href="/logs">📘 Журнал</a>
+      </div>
+    </div>
+
+    <div class="filter-bar glass-card">
+      <label>Дата с
+        <input type="date" id="dateFrom">
+      </label>
+      <label>Дата до
+        <input type="date" id="dateTo">
+      </label>
+      <label>Пользователь
+        <select id="userFilter">
+          <option value="">Все</option>
+        </select>
+      </label>
+      <label>Тип события
+        <select id="typeFilter">
+          <option value="">Все</option>
+          <option value="capture_started">Запуск захвата</option>
+          <option value="capture_stopped">Остановка захвата</option>
+          <option value="sniffer_started">Запуск сниффера</option>
+          <option value="flow_emitted">Поток</option>
+          <option value="data_load">Загрузка данных</option>
+          <option value="analysis">Анализ</option>
+          <option value="session_started">Сессия</option>
+          <option value="session_finished">Завершение</option>
+        </select>
+      </label>
+      <label>Поиск в деталях
+        <input type="search" id="searchField" placeholder="IP, метка или текст">
+      </label>
+      <div class="filter-actions">
+        <button id="applyFilters" class="primary" type="button">Применить</button>
+        <button id="resetFilters" class="ghost" type="button">Сбросить</button>
+      </div>
+    </div>
+
+    <div class="glass-card" style="margin-top:16px;">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Пользователь</th>
+            <th>Тип события</th>
+            <th>Описание / детали</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="logsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

@@ -189,6 +189,7 @@ class FlowLogger:
             )
             oldest_to_keep_id = db_session.execute(subq).scalar()
 
+
             if oldest_to_keep_id:
                 db_session.execute(
                     delete(Flow).where(Flow.id < oldest_to_keep_id)
