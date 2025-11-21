@@ -1,23 +1,30 @@
-import json
-from pathlib import Path
+"""Model management for IntelliSniff.
+
+This manager always exposes feature names from the joblib bundle and ensures the
+active model object is served from the bundle's "model" key. It also provides a
+stable version listing so the UI selectors remain populated even if only a
+single model exists.
+"""
+from __future__ import annotations
+
 import logging
-import joblib
 import re
+from pathlib import Path
+from typing import Dict, Optional
+
+import joblib
 
 log = logging.getLogger("ml.model_manager")
 
 
-# ======================================================================
-#   ModelInfo — удобная обёртка для активной модели
-# ======================================================================
-
 class ModelInfo:
-    def __init__(self, version: int, file: str, features: list):
-        self.version = version
-        self.file = file
-        self.feature_names = features
+    def __init__(self, version: int, file: Path, feature_names: Optional[list], model):
+        self.version = int(version)
+        self.file = str(file)
+        self.feature_names = list(feature_names or [])
+        self.model = model
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, object]:
         return {
             "version": self.version,
             "file": self.file,
@@ -25,192 +32,94 @@ class ModelInfo:
         }
 
 
-# ======================================================================
-#   ModelManager — центральный менеджер моделей
-# ======================================================================
-
 class ModelManager:
-    """
-    Полностью рабочий ModelManager:
-
-    ✔ Читает/создаёт registry.json
-    ✔ Ищет модели attack_model_X.joblib / vpn_model_X.joblib
-    ✔ Загрузает sklearn-модель + фичи + trained_at
-    ✔ Возвращает ModelInfo вместо dict (для inference/predictor/UI)
-    ✔ Выдаёт версии, активную модель
-    ✔ Совместим со всеми API эндпоинтами
-    """
-
     TASKS = ["attack", "vpn"]
 
     def __init__(self, base_dir: Path):
-        self.base_dir = Path(base_dir)              # ml/
-        self.data_dir = self.base_dir / "data"      # ml/data/
-        self.registry_path = self.data_dir / "model_registry.json"
-
+        self.base_dir = Path(base_dir)
+        self.data_dir = self.base_dir / "data"
+        self.metrics_path = self.data_dir / "metrics.json"
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Файл с метриками дрейфа
-        self.metrics_path = self.data_dir / "metrics.json"
+        self._bundles: Dict[str, Dict[int, Dict[str, object]]] = {task: {} for task in self.TASKS}
+        self._active: Dict[str, int] = {task: 1 for task in self.TASKS}
 
-        # Загружаем существующий registry.json
-        self.registry = self._load_registry()
+        self._load_bundles()
 
-        # Автоматически ищем модели по файлам
-        self._discover_models()
-
-        # Сохраняем registry обратно
-        self._save_registry()
-
-    # ==================================================================
-    #   ЗАГРУЗКА / СОХРАНЕНИЕ registry.json
-    # ==================================================================
-
-    def _load_registry(self):
-        """Загружает JSON или создаёт пустой шаблон."""
-        if not self.registry_path.exists():
-            log.info("📄 model_registry.json отсутствует — создаю новый")
-
-            return {
-                task: {
-                    "active": None,
-                    "versions": []
-                }
-                for task in self.TASKS
-            }
-
-        try:
-            with open(self.registry_path, "r", encoding="utf-8") as f:
-                reg = json.load(f)
-
-            # Гарантируем структуру
-            for task in self.TASKS:
-                reg.setdefault(task, {})
-                reg[task].setdefault("active", None)
-                reg[task].setdefault("versions", [])
-
-            return reg
-
-        except Exception as ex:
-            log.error("❌ Ошибка чтения registry.json: %s", ex)
-            return {
-                task: {"active": None, "versions": []}
-                for task in self.TASKS
-            }
-
-    def _save_registry(self):
-        """Сохраняет registry.json."""
-        try:
-            with open(self.registry_path, "w", encoding="utf-8") as f:
-                json.dump(self.registry, f, ensure_ascii=False, indent=2)
-        except Exception as ex:
-            log.error("❌ Ошибка сохранения registry.json: %s", ex)
-
-    # ==================================================================
-    #   АВТО-ОБНАРУЖЕНИЕ МОДЕЛЕЙ
-    # ==================================================================
-
-    def _discover_models(self):
-        """
-        Ищет файлы:
-            attack_model_1.joblib
-            vpn_model_2.joblib
-        и автоматически обновляет registry.
-        """
+    # ------------------------------------------------------------------
+    def _load_bundles(self) -> None:
+        """Discover joblib bundles and prime registry."""
         for task in self.TASKS:
             pattern = f"{task}_model_*.joblib"
-            files = list(self.data_dir.glob(pattern))
-
-            if not files:
-                log.warning(f"⚠️ Не найдено моделей для {task}")
-                continue
-
-            versions = []
-
-            for f in files:
-                m = re.search(rf"{task}_model_(\d+)\.joblib$", f.name)
-                if not m:
+            for file in self.data_dir.glob(pattern):
+                match = re.search(r"_(\d+)\.joblib$", file.name)
+                if not match:
                     continue
+                version = int(match.group(1))
+                try:
+                    bundle = joblib.load(file)
+                    if not isinstance(bundle, dict) or "model" not in bundle:
+                        log.warning("Bundle %s missing model key", file)
+                        continue
+                    self._bundles[task][version] = {"bundle": bundle, "file": file}
+                    log.info("Loaded %s bundle v%s", task, version)
+                except Exception:
+                    log.exception("Failed to load model bundle %s", file)
+            if self._bundles[task]:
+                self._active[task] = max(self._bundles[task])
+            else:
+                # placeholder registry so UI still has a version to show
+                self._bundles[task][1] = {"bundle": {"model": None, "features": []}, "file": self.data_dir / f"{task}_model_1.joblib"}
+                self._active[task] = 1
 
-                v = int(m.group(1))
-                versions.append({
-                    "version": v,
-                    "file": str(f),
-                })
-
-            versions_sorted = sorted(versions, key=lambda x: x["version"])
-
-            self.registry[task]["versions"] = versions_sorted
-            self.registry[task]["active"] = versions_sorted[-1]
-
-            log.info(
-                f"🧩 {task}: найдено {len(versions_sorted)} моделей, активная v{versions_sorted[-1]['version']}"
-            )
-
-    # ==================================================================
-    #   ЗАГРУЗКА АКТИВНОЙ МОДЕЛИ (ModelInfo)
-    # ==================================================================
-
-    def get_active_model_info(self, task: str):
-        """Возвращает ModelInfo (не dict) — это важно."""
-        task_reg = self.registry.get(task)
-        if not task_reg:
+    # ------------------------------------------------------------------
+    def get_active_model_info(self, task: str) -> Optional[ModelInfo]:
+        task = task or "attack"
+        bundle_info = self._bundles.get(task, {}).get(self._active.get(task, 1))
+        if not bundle_info:
             return None
+        bundle = bundle_info["bundle"]
+        file = bundle_info["file"]
+        model_obj = bundle.get("model")
+        features = bundle.get("features") or bundle.get("feature_names") or []
+        return ModelInfo(version=self._active.get(task, 1), file=file, feature_names=features, model=model_obj)
 
-        active = task_reg.get("active")
-        if not active:
-            return None
+    # ------------------------------------------------------------------
+    def _load_model_object(self, task: str, version: Optional[int] = None):
+        task = task or "attack"
+        version = int(version or self._active.get(task, 1))
+        bundle_info = self._bundles.get(task, {}).get(version)
+        if not bundle_info:
+            raise ValueError(f"Model for task {task} v{version} not found")
+        return bundle_info["bundle"].get("model")
 
-        file = active["file"]
-        version = active["version"]
+    # ------------------------------------------------------------------
+    def set_active_model(self, task: str, version: int) -> bool:
+        if version in self._bundles.get(task, {}):
+            self._active[task] = version
+            return True
+        raise ValueError(f"No version {version} for task {task}")
 
-        bundle = joblib.load(file)
-
-        return ModelInfo(
-            version=version,
-            file=file,
-            features=bundle.get("features", [])
-        )
-
-    # ==================================================================
-    #   ЗАГРУЗКА SKLEARN-МОДЕЛИ ПО ВЕРСИИ
-    # ==================================================================
-
-    def _load_model_object(self, task: str, version: int):
-        for v in self.registry[task]["versions"]:
-            if v["version"] == version:
-                bundle = joblib.load(v["file"])
-                return bundle["model"]
-
-        raise ValueError(f"❌ Модель {task} версии v{version} не найдена")
-
-    # ==================================================================
-    #   ПЕРЕКЛЮЧЕНИЕ АКТИВНОЙ МОДЕЛИ
-    # ==================================================================
-
-    def set_active_model(self, task: str, version: int):
-        """Делает выбранную модель активной."""
-        for v in self.registry[task]["versions"]:
-            if v["version"] == version:
-                self.registry[task]["active"] = v
-                self._save_registry()
-                log.info(f"🔄 Активная модель {task} → v{version}")
-                return True
-
-        raise ValueError(f"❌ Нет версии {version} для задачи {task}")
-
-    # ==================================================================
-    #   ВЕРСИИ (карма для UI)
-    # ==================================================================
-
+    # ------------------------------------------------------------------
     def get_versions(self, task: str):
-        """Полный список версий для UI/API."""
-        return self.registry.get(task, {}).get("versions", [])
+        """Return versions for UI: always at least one active version."""
+        task = task or "attack"
+        versions = []
+        active_version = self._active.get(task, 1)
+        for ver in sorted(self._bundles.get(task, {})):
+            versions.append({"version": ver, "active": ver == active_version, "path": str(self._bundles[task][ver]["file"])})
+        if not versions:
+            versions = [{"version": 1, "active": True}]
+        return versions
 
     @property
-    def available_versions(self):
-        """Старый метод — UI всё ещё его вызывает."""
-        return {
-            task: [v["version"] for v in self.registry[task]["versions"]]
-            for task in self.TASKS
-        }
+    def registry(self) -> Dict[str, Dict[str, object]]:
+        """Compatibility snapshot used by API."""
+        reg: Dict[str, Dict[str, object]] = {}
+        for task in self.TASKS:
+            active_version = self._active.get(task, 1)
+            reg[task] = {
+                "active": {"version": active_version, "file": str(self._bundles[task][active_version]["file"]) if self._bundles.get(task) else None},
+                "versions": self.get_versions(task),
+            }
+        return reg
