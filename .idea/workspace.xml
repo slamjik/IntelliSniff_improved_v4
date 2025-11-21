@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="Небольшие изменения">
+    <list default="true" id="c61945e2-c76d-4922-8aad-6756e0a9ac8e" name="Changes" comment="исправленна ошибка логов">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml/data/live_buffer.json" beforeDir="false" afterPath="$PROJECT_DIR$/ml/data/live_buffer.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/static/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/templates/dashboard_full.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/templates/dashboard_full.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/templates/logs.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/templates/logs.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/templates/logs_session.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/templates/logs_session.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -297,7 +299,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763721180056</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="исправленна ошибка логов">
+      <option name="closed" value="true" />
+      <created>1763722314226</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1763722314226</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -355,6 +365,7 @@
     <MESSAGE value="Да" />
     <MESSAGE value="изменена большая часть проекта + добавлены 2 мл модели" />
     <MESSAGE value="Небольшие изменения" />
-    <option name="LAST_COMMIT_MESSAGE" value="Небольшие изменения" />
+    <MESSAGE value="исправленна ошибка логов" />
+    <option name="LAST_COMMIT_MESSAGE" value="исправленна ошибка логов" />
   </component>
 </project>
