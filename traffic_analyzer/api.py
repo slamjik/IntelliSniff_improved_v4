@@ -27,7 +27,7 @@ from . import capture, event_bus, storage
 from .ml_runtime import get_auto_updater, get_drift_detector, get_model_manager, get_predictor
 from .auth import get_current_username
 from app.api import get_router as get_app_router
-from app.db import session_scope
+from app.db import ensure_flow_schema, session_scope
 from app.models import Flow
 
 log = logging.getLogger("ta.api")
@@ -132,6 +132,24 @@ async def _broker_loop():
 
 @app.on_event("startup")
 async def startup_event():
+    schema_ok = False
+    # Make sure the primary database schema matches the ORM (runtime safety net)
+    try:
+        with session_scope():
+            ensure_flow_schema()
+        schema_ok = True
+    except Exception:
+        log.exception("Failed to auto-sync flows table schema")
+
+    # Reload models/metrics only after schema sync; don't break startup if it fails
+    if schema_ok:
+        try:
+            model_manager._load_bundles()
+            model_manager._load_registry()
+            model_manager._load_metrics()
+        except Exception:
+            log.exception("Failed to refresh models during startup")
+
     asyncio.create_task(_broker_loop())
 
 
@@ -215,9 +233,8 @@ def api_predict(payload: PredictRequest, user: str = Depends(get_current_usernam
 
 @app.post("/switch_model")
 def api_switch_model(payload: SwitchModelRequest, user: str = Depends(get_current_username)):
-    version_int = int(payload.version)
-    model_manager.set_active_model(payload.task, version_int)
-    return {"status": "ok", "task": payload.task, "active_version": version_int}
+    model_manager.set_active_model(payload.task, payload.version)
+    return {"status": "ok", "task": payload.task, "active_version": payload.version}
 
 
 @app.get("/get_versions")
@@ -255,7 +272,7 @@ def api_get_versions(
 
         versions.append({
             "version": ver,
-            "active": (ver == active_version)
+            "active": (str(ver) == str(active_version))
         })
 
     return {"task": task, "versions": versions}

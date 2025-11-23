@@ -675,6 +675,36 @@ td {
   display: none !important;
 }
 
+.collapsible {
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+  max-height: 9999px;
+  opacity: 1;
+}
+
+.collapsible.collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+}
+
+.inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.chip-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(148,163,184,0.15);
+  border: 1px solid rgba(148,163,184,0.25);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 
 .ml-section {
   background: rgba(15,23,42,0.72);
@@ -721,6 +751,10 @@ td {
   flex-direction: column;
   gap: 12px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ml-card.ml-card-empty {
+  opacity: 0.9;
+  border-style: dashed;
 }
 
 .ml-card-warning {
@@ -783,10 +817,33 @@ td {
 .ml-drift {
   font-size: 13px;
   color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .ml-card-warning .ml-drift {
   color: var(--warning);
+}
+
+.ml-predictions-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drift-line {
+  font-size: 13px;
+}
+
+.drift-desc {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.drift-flag-warning {
+  color: var(--warning);
+  font-weight: 600;
 }
 
 .ml-predictions {
