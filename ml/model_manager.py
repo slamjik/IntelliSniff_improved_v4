@@ -46,8 +46,10 @@ class ModelManager:
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.versions_dir.mkdir(parents=True, exist_ok=True)
 
+
         self._bundles: Dict[str, Dict[str, Dict[str, object]]] = {task: {} for task in self.TASKS}
         self._active: Dict[str, Optional[str]] = {task: None for task in self.TASKS}
+
         self.available_versions: Dict[str, list] = {task: [] for task in self.TASKS}
         self._metrics: Dict[str, Dict[str, dict]] = {}
         self._registry: Dict[str, dict] = {}
@@ -55,6 +57,7 @@ class ModelManager:
         self._load_bundles()
         self._load_registry()
         self._load_metrics()
+
         self._refresh_available_versions()
 
     # ------------------------------------------------------------------
@@ -123,6 +126,7 @@ class ModelManager:
         """Return versions for UI: always at least one active version."""
         task = task or "attack"
         versions = []
+
         active_version = self._active.get(task)
 
         for ver, meta in self._bundles.get(task, {}).items():
@@ -131,6 +135,7 @@ class ModelManager:
                 "active": str(ver) == str(active_version),
                 "path": str(meta.get("file")),
             })
+
 
         if not versions:
             reg_info = self._registry.get(task, {}) if isinstance(self._registry, dict) else {}
@@ -168,6 +173,7 @@ class ModelManager:
                 log.warning("Failed to read registry.json", exc_info=True)
                 self._registry = {}
         else:
+
             self._registry = {task: {"active": None, "available": {}} for task in self.TASKS}
 
         for task in self.TASKS:
@@ -179,6 +185,7 @@ class ModelManager:
                 self._active[task] = sorted(bundles.keys())[0]
             else:
                 self._active[task] = None
+
 
     def _save_registry(self) -> None:
         try:
@@ -195,6 +202,7 @@ class ModelManager:
                 self._metrics = {}
         else:
             self._metrics = {}
+
 
     def _refresh_available_versions(self) -> None:
         """Expose versions to API/UI combining discovered bundles with metrics."""
@@ -227,7 +235,9 @@ class ModelManager:
         self._metrics.setdefault(task, {})[str(version)] = metrics or {}
         self._save_metrics()
         self._load_metrics()
+
         self._refresh_available_versions()
+
 
     def _save_metrics(self) -> None:
         try:
@@ -240,12 +250,15 @@ class ModelManager:
         self._registry.setdefault(task, {"active": version, "available": {}})
         self._registry[task].setdefault("available", {})[str(version)] = {"path": path, **(metadata or {})}
         self._save_registry()
+
         self._refresh_available_versions()
 
     def switch_model(self, task: str, version: str | int) -> None:
         task = task or "attack"
         self._registry.setdefault(task, {"active": version, "available": {}})
         self._registry[task]["active"] = str(version)
+
         self._active[task] = str(version)
         self._save_registry()
         self._refresh_available_versions()
+
