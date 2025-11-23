@@ -9,6 +9,7 @@ const state = {
   ml: {
     tasks: ['attack', 'vpn', 'anomaly'],
     versions: {},
+    models: {},
     active: {},
     metrics: {},
     drift: {},
@@ -862,6 +863,29 @@ function normalizeVersionEntry(entry) {
   };
 }
 
+function normalizePredictionEntry(prediction) {
+  if (!prediction) return null;
+  const task = prediction.task || prediction.model || prediction.model_task || 'attack';
+  const score = prediction.score ?? prediction.confidence ?? 0;
+  const result = prediction.result ?? prediction.label_name ?? prediction.label ?? '—';
+
+  return {
+    type: 'prediction',
+    timestamp: prediction.timestamp || prediction.ts || null,
+    task,
+    model: prediction.model || task,
+    result,
+    label: prediction.label ?? result,
+    label_name: prediction.label_name ?? result,
+    score,
+    confidence: score,
+    version: prediction.version || prediction.model_version || null,
+    explanation: prediction.explanation,
+    features: prediction.features || prediction.summary,
+    drift: prediction.drift,
+  };
+}
+
 function normalizeQualityMetrics(entry) {
   if (!entry) return [];
   if (Array.isArray(entry)) return entry;
@@ -918,48 +942,36 @@ async function loadMlDashboard() {
     }
   };
 
-  const [status, quality, autoUpdate, drift, predictions] = await Promise.all([
-    safeFetch('/model_status'),
-    safeFetch('/quality_metrics'),
-    safeFetch('/auto_update_status'),
-    safeFetch('/drift_status'),
-    safeFetch('/ml/predictions?limit=50'),
+  const [status, models, drift, predictions] = await Promise.all([
+    safeFetch('/api/ml/status'),
+    safeFetch('/api/ml/models'),
+    safeFetch('/api/ml/drift'),
+    safeFetch('/predictions/recent?limit=50'),
   ]);
 
   state.ml.tasks = tasks;
-  state.ml.active = status || {};
-  state.ml.metrics = quality || {};
+  state.ml.models = models || {};
+  state.ml.active = status?.active || {};
+  state.ml.metrics = status?.metrics || {};
   state.ml.drift = drift || {};
-  state.ml.autoUpdate = !!(autoUpdate && autoUpdate.enabled);
-  state.ml.predictions = (predictions?.items || []).map((item) => ({ ...item }));
-
-  const versionsResponses = await Promise.allSettled(
-    tasks.map((task) => apiFetch(`/get_versions?task=${task}`))
-  );
+  state.ml.autoUpdate = !!(status && status.auto_update);
+  state.ml.predictions = (predictions?.items || [])
+    .map((item) => normalizePredictionEntry(item))
+    .filter((item) => item !== null);
 
   const normalizedVersions = {};
-  tasks.forEach((task, idx) => {
-    const result = versionsResponses[idx];
-    let versions = [];
-    if (result.status === 'fulfilled') {
-      versions = normalizeVersionsResponse(task, result.value);
-    } else {
-      console.warn(`Не удалось загрузить версии для ${task}:`, result.reason);
-    }
-
+  tasks.forEach((task) => {
+    const modelList = state.ml.models?.[task]?.models || [];
+    const active = state.ml.models?.[task]?.active || state.ml.active?.[task];
     const qualityList = normalizeQualityMetrics(state.ml.metrics?.[task]);
     const metricsMap = buildMetricsMap(qualityList);
 
-    if (!versions.length && qualityList.length) {
-      versions = qualityList
-        .map((item) => normalizeVersionEntry(item))
-        .filter((item) => item !== null);
-    } else {
-      versions = versions.map((item) => {
-        const metrics = metricsMap.get(String(item.version));
-        return metrics ? { ...item, ...metrics } : item;
-      });
-    }
+    const versions = modelList.map((name) => {
+      const metrics = metricsMap.get(String(name));
+      return metrics
+        ? { version: name, active: String(name) === String(active), ...metrics }
+        : { version: name, active: String(name) === String(active) };
+    });
 
     normalizedVersions[task] = versions;
   });
@@ -1092,9 +1104,9 @@ function renderMlPredictions() {
   subset.forEach((pred) => {
     const tr = document.createElement('tr');
     const ts = pred.timestamp ? formatDate(Number(pred.timestamp) * 1000) : '—';
-    const taskName = translateTaskName(pred.task || 'attack');
-    const labelText = translateFeatureKey(pred.label_name || pred.label || '—');
-    const confText = `${formatNumber((pred.confidence || pred.score || 0) * 100, 1)}%`;
+    const taskName = translateTaskName(pred.model || pred.task || 'attack');
+    const labelText = translateFeatureKey(pred.result || pred.label_name || pred.label || '—');
+    const confText = `${formatNumber((pred.score ?? pred.confidence ?? 0) * 100, 1)}%`;
     const explanationText = Array.isArray(pred.explanation)
       ? pred.explanation
           .map((item) => `${translateFeatureKey(item.feature)}: ${
@@ -1153,14 +1165,15 @@ function toggleFlowsPanel() {
 }
 
 function handleMlPrediction(prediction) {
-  if (!prediction) return;
-  state.ml.predictions.unshift(prediction);
+  const normalized = normalizePredictionEntry(prediction);
+  if (!normalized) return;
+  state.ml.predictions.unshift(normalized);
   if (state.ml.predictions.length > 80) {
     state.ml.predictions.pop();
   }
-  if (prediction.drift) {
-    state.ml.drift[prediction.task] = prediction.drift;
-    if (prediction.drift.drift) {
+  if (normalized.drift) {
+    state.ml.drift[normalized.task] = normalized.drift;
+    if (normalized.drift.drift) {
       setStatusBadge('warning');
     }
   }
@@ -1250,22 +1263,29 @@ function setupWebSocket() {
   const ws = new WebSocket(`${protocol}${window.location.host}/ws/live`);
   ws.onmessage = (event) => {
     try {
-      const msg = JSON.parse(event.data);
-      switch (msg.topic) {
+      const parsed = JSON.parse(event.data);
+      const msg = parsed?.type
+        ? parsed
+        : parsed?.topic
+          ? { type: parsed.topic, ...(parsed.data || {}) }
+          : null;
+      if (!msg) return;
+      switch (msg.type) {
         case 'flow':
-          addFlow(msg.data);
+          addFlow(msg);
           break;
         case 'ml_prediction':
-          handleMlPrediction(msg.data);
+        case 'prediction':
+          handleMlPrediction(msg);
           break;
         case 'drift':
-          handleDriftEvent(msg.data);
+          handleDriftEvent(msg);
           break;
         case 'model_update':
-          handleModelUpdate(msg.data);
+          handleModelUpdate(msg);
           break;
         case 'auto_update':
-          handleAutoUpdate(msg.data);
+          handleAutoUpdate(msg);
           break;
         default:
           break;

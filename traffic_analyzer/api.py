@@ -6,6 +6,7 @@ import io
 import json
 import os
 import threading
+import time
 import logging
 from typing import Optional, Set
 
@@ -101,6 +102,27 @@ _ws_clients_lock = threading.Lock()
 _ws_clients: Set[WebSocket] = set()
 
 
+def _normalize_ws_event(topic: str, payload: dict) -> dict:
+    payload = payload or {}
+    if topic == "flow":
+        event = dict(payload)
+        event.setdefault("type", "flow")
+        event.setdefault("task", payload.get("model_task") or payload.get("task"))
+        event.setdefault("version", payload.get("model_version") or payload.get("attack_version"))
+        event.setdefault("timestamp", payload.get("ts") or payload.get("timestamp"))
+        return event
+
+    if topic == "ml_prediction":
+        event = _normalize_prediction_payload(payload)
+        event["type"] = "prediction"
+        return event
+
+    if topic == "drift":
+        return {"type": "drift", **payload}
+
+    return {"type": topic, **payload}
+
+
 async def _broker_loop():
     q = event_bus.get_queue()
     loop = asyncio.get_event_loop()
@@ -112,7 +134,7 @@ async def _broker_loop():
         except Exception:
             continue
 
-        msg = {"topic": topic, "data": payload}
+        msg = _normalize_ws_event(topic, payload)
 
         to_remove = []
         with _ws_clients_lock:
@@ -121,7 +143,7 @@ async def _broker_loop():
         for ws in clients:
             try:
                 await ws.send_json(msg)
-            except:
+            except Exception:
                 to_remove.append(ws)
 
         if to_remove:
@@ -278,6 +300,50 @@ def api_get_versions(
     return {"task": task, "versions": versions}
 
 
+# ==========================
+#  ML — DASHBOARD API (new)
+# ==========================
+
+
+def _collect_models_snapshot() -> dict:
+    snapshot = {}
+    for task in getattr(model_manager, "TASKS", ["attack", "vpn", "anomaly"]):
+        bundles = model_manager._bundles.get(task, {}) if hasattr(model_manager, "_bundles") else {}
+        models = sorted(bundles.keys()) if isinstance(bundles, dict) else []
+        active = model_manager._active.get(task) if hasattr(model_manager, "_active") else None
+        snapshot[task] = {
+            "models": models,
+            "active": active if active in models else (models[0] if models else None),
+        }
+    return snapshot
+
+
+@app.get("/api/ml/models")
+def api_ml_models(user: str = Depends(get_current_username)):
+    """Return available joblib models per task (attack/vpn/anomaly)."""
+    return _collect_models_snapshot()
+
+
+@app.get("/api/ml/status")
+def api_ml_status(user: str = Depends(get_current_username)):
+    models_snapshot = _collect_models_snapshot()
+    active = {task: info.get("active") for task, info in models_snapshot.items()}
+    return {
+        "active": active,
+        "auto_update": auto_updater.enabled,
+        "metrics": model_manager.available_versions,
+    }
+
+
+@app.get("/api/ml/drift")
+def api_ml_drift(user: str = Depends(get_current_username)):
+    status = drift_detector.get_status()
+    result = {}
+    for task in getattr(model_manager, "TASKS", ["attack", "vpn", "anomaly"]):
+        result[task] = status.get(task) or {"task": task, "drift": False}
+    return result
+
+
 
 
 @app.get("/model_status")
@@ -300,10 +366,43 @@ def api_drift_status(user: str = Depends(get_current_username)):
     return drift_detector.get_status()
 
 
+def _normalize_prediction_payload(pred: dict) -> dict:
+    pred = pred or {}
+    score = pred.get("score") if pred.get("score") is not None else pred.get("confidence")
+    result = pred.get("result") or pred.get("label_name") or pred.get("label")
+    model_name = pred.get("model") or pred.get("task") or "attack"
+    timestamp = pred.get("timestamp") or pred.get("ts") or pred.get("time")
+    if not timestamp:
+        timestamp = time.time()
+
+    return {
+        "type": "prediction",
+        "timestamp": timestamp,
+        "task": pred.get("task") or pred.get("model_task") or model_name,
+        "model": model_name,
+        "result": result,
+        "label": pred.get("label"),
+        "label_name": pred.get("label_name") or result,
+        "score": score,
+        "confidence": score,
+        "version": pred.get("version") or pred.get("model_version"),
+        "explanation": pred.get("explanation"),
+        "features": pred.get("features") or pred.get("vector"),
+        "summary": pred.get("summary"),
+        "drift": pred.get("drift"),
+    }
+
+
 @app.get("/ml/predictions")
 def api_ml_predictions(limit: int = Query(50, ge=1, le=500), user: str = Depends(get_current_username)):
     buf = predictor.get_buffer()
-    return {"items": list(reversed(buf[-limit:]))}
+    normalized = [_normalize_prediction_payload(item) for item in reversed(buf[-limit:])]
+    return {"items": normalized}
+
+
+@app.get("/predictions/recent")
+def api_recent_predictions(limit: int = Query(50, ge=1, le=500), user: str = Depends(get_current_username)):
+    return api_ml_predictions(limit=limit, user=user)
 
 
 @app.post("/trigger_validation")
