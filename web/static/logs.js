@@ -321,13 +321,55 @@ function renderSessionFlows(flows) {
     badge.className = 'badge-label';
     badge.textContent = f.label || '—';
     label.appendChild(badge);
+    const detailsCell = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'details-btn';
+    btn.type = 'button';
+    btn.textContent = 'Подробнее';
+    detailsCell.appendChild(btn);
+    const detailsRow = document.createElement('tr');
+    detailsRow.className = 'hidden';
+    const detailsTd = document.createElement('td');
+    detailsTd.colSpan = 7;
+    const detailsWrapper = document.createElement('div');
+    detailsWrapper.className = 'details-card';
+    const detailsPayload = {
+      summary: f.summary || {},
+      attack: {
+        task: f.task_attack,
+        confidence: f.attack_confidence,
+        version: f.attack_version,
+        explanation: f.attack_explanation,
+      },
+      vpn: {
+        task: f.task_vpn,
+        confidence: f.vpn_confidence,
+        version: f.vpn_version,
+        explanation: f.vpn_explanation,
+      },
+      anomaly: {
+        task: f.task_anomaly,
+        confidence: f.anomaly_confidence,
+        version: f.anomaly_version,
+        explanation: f.anomaly_explanation,
+      },
+    };
+    detailsWrapper.innerHTML = formatJsonPretty(detailsPayload);
+    detailsTd.appendChild(detailsWrapper);
+    detailsRow.appendChild(detailsTd);
+    btn.addEventListener('click', () => {
+      detailsRow.classList.toggle('hidden');
+    });
+
     row.appendChild(time);
     row.appendChild(route);
     row.appendChild(bytes);
     row.appendChild(packets);
     row.appendChild(proto);
     row.appendChild(label);
+    row.appendChild(detailsCell);
     body.appendChild(row);
+    body.appendChild(detailsRow);
   });
 }
 

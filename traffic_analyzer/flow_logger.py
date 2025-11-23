@@ -5,6 +5,7 @@ analytics remain consistent.
 """
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
@@ -76,6 +77,27 @@ def _as_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _as_json(value: Any) -> Any:
+    """Safely coerce incoming value to JSON-serializable object."""
+
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except Exception:
+            # leave raw string so JSONB accepts it but do not fail
+            return value
+    return value
+
+
+def _as_dict(value: Any) -> Dict[str, Any]:
+    parsed = _as_json(value)
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def _to_utc_datetime_from_ms(value: Any) -> datetime:
     if isinstance(value, datetime):
         return value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
@@ -111,6 +133,7 @@ class FlowLogger:
                 if duration_sec == 0:
                     duration_sec = _as_float(flow.get("flow_duration"))
 
+                base_summary = _as_dict(flow.get("summary"))
                 row = Flow(
                     ts=ts_dt,
                     iface=_as_text(flow.get("iface")) or "-",
@@ -127,17 +150,17 @@ class FlowLogger:
                     task_attack=_as_text(flow.get("task_attack")),
                     attack_confidence=_as_float(flow.get("attack_confidence")),
                     attack_version=_as_text(flow.get("attack_version")),
-                    attack_explanation=flow.get("attack_explanation"),
+                    attack_explanation=_as_json(flow.get("attack_explanation")),
                     task_vpn=_as_text(flow.get("task_vpn")),
                     vpn_confidence=_as_float(flow.get("vpn_confidence")),
                     vpn_version=_as_text(flow.get("vpn_version")),
-                    vpn_explanation=flow.get("vpn_explanation"),
+                    vpn_explanation=_as_json(flow.get("vpn_explanation")),
                     task_anomaly=_as_text(flow.get("task_anomaly")),
                     anomaly_confidence=_as_float(flow.get("anomaly_confidence")),
                     anomaly_version=_as_text(flow.get("anomaly_version")),
-                    anomaly_explanation=flow.get("anomaly_explanation"),
+                    anomaly_explanation=_as_json(flow.get("anomaly_explanation")),
                     summary={
-                        **(flow.get("summary") or {}),
+                        **base_summary,
                         "duration": duration_sec,
                         "flow_duration": duration_sec,
                     },
