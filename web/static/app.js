@@ -133,7 +133,9 @@ function mergeModelResults(flow) {
 
 function formatTaskLabel(task, label) {
   const normalized = String(label || '').toLowerCase();
+
   if (task === 'vpn') return normalized && normalized !== '0' && normalized !== 'benign' ? 'VPN-трафик' : 'Нормальный трафик';
+
   if (task === 'anomaly') return normalized === '1' || normalized.includes('anom') ? 'Аномалия' : 'Нормальный трафик';
   if (task === 'attack') return normalized === '0' || normalized === 'benign' || normalized === 'normal' ? 'Нормальный трафик' : 'Атака';
   return label || '—';
@@ -165,7 +167,9 @@ function processTrafficLabels(flow) {
   const labelStr = labelRaw === undefined || labelRaw === null || labelRaw === '' ? 'unknown' : String(labelRaw).toLowerCase();
   const taskVerdicts = {
     attack: { positive: 'Атака', negative: 'Нормальный трафик' },
+
     vpn: { positive: 'VPN-трафик', negative: 'Нормальный трафик' },
+
     anomaly: { positive: 'Аномалия', negative: 'Нормальный трафик' },
   };
   const verdict = taskVerdicts[task] || taskVerdicts.attack;
