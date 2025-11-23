@@ -103,6 +103,42 @@ function handleNegativeValues(flow) {
   return flow;
 }
 
+function mergeModelResults(flow) {
+  const models = { ...(flow.models || flow.summary?.models || {}) };
+
+  const upsert = (task, labelKey, confKey, versionKey, explanationKey) => {
+    const label = flow[labelKey];
+    const conf = flow[confKey];
+    const version = flow[versionKey];
+    const explanation = flow[explanationKey];
+    if (label !== undefined || conf !== undefined || version !== undefined || explanation) {
+      models[task] = {
+        ...(models[task] || {}),
+        label: label !== undefined ? label : models[task]?.label,
+        label_name: models[task]?.label_name || (typeof label === 'string' ? label : undefined),
+        confidence: conf !== undefined ? conf : models[task]?.confidence,
+        version: version !== undefined ? version : models[task]?.version,
+        explanation: explanation !== undefined ? explanation : models[task]?.explanation,
+      };
+    }
+  };
+
+  upsert('attack', 'task_attack', 'attack_confidence', 'attack_version', 'attack_explanation');
+  upsert('vpn', 'task_vpn', 'vpn_confidence', 'vpn_version', 'vpn_explanation');
+  upsert('anomaly', 'task_anomaly', 'anomaly_confidence', 'anomaly_version', 'anomaly_explanation');
+
+  flow.models = models;
+  return flow;
+}
+
+function formatTaskLabel(task, label) {
+  const normalized = String(label || '').toLowerCase();
+  if (task === 'vpn') return normalized && normalized !== '0' && normalized !== 'benign' ? 'VPN-трафик' : 'Без VPN';
+  if (task === 'anomaly') return normalized === '1' || normalized.includes('anom') ? 'Аномалия' : 'Нормальный трафик';
+  if (task === 'attack') return normalized === '0' || normalized === 'benign' || normalized === 'normal' ? 'Нормальный трафик' : 'Атака';
+  return label || '—';
+}
+
 function modelExplanation(task, label, flow) {
   const version = flow.model_version || flow.summary?.['модель'];
   const modelLabel = task === 'vpn' ? 'VPN-модель' : task === 'anomaly' ? 'Модель аномалий' : 'Модель атак';
@@ -114,7 +150,7 @@ function modelExplanation(task, label, flow) {
   const verdictSet = verdictMap[task] || verdictMap.attack;
   const labelStr = String(label).toLowerCase();
   let verdict = 'Метка не определена';
-  if (labelStr === '1' || labelStr === 'attack' || labelStr === 'vpn') verdict = verdictSet.positive;
+  if (labelStr === '1' || labelStr === 'attack' || labelStr === 'vpn' || labelStr === 'anomaly') verdict = verdictSet.positive;
   else if (labelStr === '0' || labelStr === 'benign' || labelStr === 'normal') verdict = verdictSet.negative;
   else if (labelStr === 'error') verdict = 'Ошибка классификации';
   else if (labelStr === 'unknown') verdict = 'Классификация неуверенная';
@@ -129,8 +165,8 @@ function processTrafficLabels(flow) {
   const labelStr = labelRaw === undefined || labelRaw === null || labelRaw === '' ? 'unknown' : String(labelRaw).toLowerCase();
   const taskVerdicts = {
     attack: { positive: 'Атака', negative: 'Нормальный трафик' },
-    vpn: { positive: 'VPN трафик', negative: 'Без VPN' },
-    anomaly: { positive: 'Аномалия', negative: 'Без аномалий' },
+    vpn: { positive: 'VPN-трафик', negative: 'Без VPN' },
+    anomaly: { positive: 'Аномалия', negative: 'Нормальный трафик' },
   };
   const verdict = taskVerdicts[task] || taskVerdicts.attack;
 
@@ -145,6 +181,17 @@ function processTrafficLabels(flow) {
       normalizedLabel = '0';
       labelName = verdict.negative;
     }
+  }
+
+  if (normalizedLabel === 'vpn') {
+    labelName = verdict.positive;
+  } else if (normalizedLabel === 'attack') {
+    labelName = taskVerdicts.attack.positive;
+  } else if (normalizedLabel === 'anomaly') {
+    labelName = taskVerdicts.anomaly.positive;
+  } else if (normalizedLabel === 'benign' || normalizedLabel === 'normal') {
+    normalizedLabel = '0';
+    labelName = taskVerdicts.attack.negative;
   }
 
   if (!labelName) {
@@ -514,6 +561,8 @@ function renderTable() {
       if (/normal|benign|allow/i.test(labelName)) labelColor = 'limegreen';
       else if (/attack|malware|botnet|exploit/i.test(labelName)) labelColor = 'crimson';
       else if (/scan|recon|brute/i.test(labelName)) labelColor = 'orange';
+      else if (/vpn/i.test(labelName)) labelColor = '#2563eb';
+      else if (/аномал|anomal/i.test(labelName)) labelColor = '#eab308';
 
       // Чипы с полезными данными (SNI, DNS, HTTP и т.д.)
       const summaryChips = [];
@@ -536,6 +585,28 @@ function renderTable() {
             }
           });
         }
+        const models = flow.models || flow.summary?.models || {};
+        const modelNames = { attack: 'Модель атак', vpn: 'Модель VPN', anomaly: 'Модель аномалий' };
+        ['attack', 'vpn', 'anomaly'].forEach((task) => {
+          const data = models[task];
+          if (!data) return;
+          const labelText = formatTaskLabel(task, data.label_name || data.label);
+          const confText = data.confidence !== undefined ? `${formatNumber((Number(data.confidence) || 0) * 100, 1)}%` : '—';
+          const versionText = data.version !== undefined ? data.version : '—';
+          summaryChips.push(
+            `<span class="summary-chip">${modelNames[task]} v${versionText}: ${escapeHtml(labelText)} (${confText})</span>`
+          );
+          if (Array.isArray(data.explanation)) {
+            data.explanation.slice(0, 2).forEach((item) => {
+              if (item && item.feature) {
+                const value = typeof item.value === 'number' ? item.value.toFixed(2) : item.value;
+                summaryChips.push(
+                  `<span class="summary-chip">${modelNames[task].replace('Модель ', '')} · ${item.feature}: ${value}</span>`
+                );
+              }
+            });
+          }
+        });
         if (!summaryChips.length) {
           summaryChips.push(
             `<span class="summary-chip">${formatNumber(
@@ -585,6 +656,7 @@ function updateTraffic(flow) {
 
 function normalizeFlowEntry(flow) {
   const safeFlow = handleNegativeValues({ ...flow });
+  mergeModelResults(safeFlow);
   safeFlow.src_display = formatSourceDestination(safeFlow.src, 'Источник');
   safeFlow.dst_display = formatSourceDestination(safeFlow.dst, 'Назначение');
   safeFlow.proto_name = mapProtocolToName(safeFlow.proto);
