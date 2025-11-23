@@ -59,6 +59,18 @@ def _flow_dict(obj: Flow) -> Dict[str, Any]:
         "bytes": obj.bytes,
         "label": obj.label,
         "score": obj.score,
+        "task_attack": obj.task_attack,
+        "attack_confidence": obj.attack_confidence,
+        "attack_version": obj.attack_version,
+        "attack_explanation": obj.attack_explanation,
+        "task_vpn": obj.task_vpn,
+        "vpn_confidence": obj.vpn_confidence,
+        "vpn_version": obj.vpn_version,
+        "vpn_explanation": obj.vpn_explanation,
+        "task_anomaly": obj.task_anomaly,
+        "anomaly_confidence": obj.anomaly_confidence,
+        "anomaly_version": obj.anomaly_version,
+        "anomaly_explanation": obj.anomaly_explanation,
         "summary": obj.summary or {},
     }
 

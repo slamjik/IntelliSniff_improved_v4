@@ -6,6 +6,7 @@ import io
 import json
 import os
 import threading
+import logging
 from typing import Optional, Set
 
 from fastapi import (
@@ -26,6 +27,10 @@ from . import capture, event_bus, storage
 from .ml_runtime import get_auto_updater, get_drift_detector, get_model_manager, get_predictor
 from .auth import get_current_username
 from app.api import get_router as get_app_router
+from app.db import session_scope
+from app.models import Flow
+
+log = logging.getLogger("ta.api")
 
 
 # ==========================
@@ -336,13 +341,72 @@ def _parse_summary(summary_value):
     return {"raw": str(summary_value)}
 
 
+def _flow_model_to_dict(row: Flow) -> dict:
+    parsed_summary = _parse_summary(row.summary)
+    return {
+        "id": row.id,
+        "ts": row.ts,
+        "iface": row.iface,
+        "src": row.src,
+        "dst": row.dst,
+        "sport": row.sport,
+        "dport": row.dport,
+        "proto": row.proto,
+        "packets": row.packets,
+        "bytes": row.bytes,
+        "label": row.label,
+        "label_name": row.label_name,
+        "score": row.score,
+        "summary": parsed_summary,
+        "task_attack": row.task_attack,
+        "attack_confidence": row.attack_confidence,
+        "attack_version": row.attack_version,
+        "attack_explanation": row.attack_explanation,
+        "task_vpn": row.task_vpn,
+        "vpn_confidence": row.vpn_confidence,
+        "vpn_version": row.vpn_version,
+        "vpn_explanation": row.vpn_explanation,
+        "task_anomaly": row.task_anomaly,
+        "anomaly_confidence": row.anomaly_confidence,
+        "anomaly_version": row.anomaly_version,
+        "anomaly_explanation": row.anomaly_explanation,
+        "models": parsed_summary.get("models"),
+    }
+
+
+def _ts_to_ms(value):
+    if value is None:
+        return None
+    if hasattr(value, "timestamp"):
+        return int(value.timestamp() * 1000)
+    try:
+        num = float(value)
+    except Exception:
+        return value
+    if num < 10_000_000_000:
+        return int(num * 1000)
+    return int(num)
+
+
 @app.get("/flows/recent")
 def api_recent_flows(limit: int = Query(100, ge=1, le=1000), user: str = Depends(get_current_username)):
+    try:
+        with session_scope() as db:
+            db_rows = db.query(Flow).order_by(Flow.ts.desc()).limit(limit).all()
+        if db_rows:
+            items = []
+            for row in db_rows:
+                obj = _flow_model_to_dict(row)
+                obj["ts"] = _ts_to_ms(obj.get("ts"))
+                items.append(obj)
+            return {"items": items, "count": len(items)}
+    except Exception as exc:  # noqa: BLE001 - fallback to legacy storage
+        log.warning("Failed to load flows from primary database, falling back to SQLite: %s", exc)
+
     rows = storage.recent(limit=limit)
     for row in rows:
         row["summary"] = _parse_summary(row.get("summary"))
-        if isinstance(row.get("ts"), (int, float)) and row["ts"] < 10_000_000_000:
-            row["ts"] = int(row["ts"] * 1000)
+        row["ts"] = _ts_to_ms(row.get("ts"))
     return {"items": rows, "count": len(rows)}
 
 

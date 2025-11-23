@@ -134,5 +134,21 @@ class Flow(Base):
     label_name: Mapped[Optional[str]] = mapped_column(String(64))
     score: Mapped[Optional[float]] = mapped_column(Float)
 
+    # Detailed ML results per task
+    task_attack: Mapped[Optional[str]] = mapped_column(String(32))
+    attack_confidence: Mapped[Optional[float]] = mapped_column(Float)
+    attack_version: Mapped[Optional[str]] = mapped_column(String(32))
+    attack_explanation: Mapped[Optional[dict]] = mapped_column(JSONB)
+
+    task_vpn: Mapped[Optional[str]] = mapped_column(String(32))
+    vpn_confidence: Mapped[Optional[float]] = mapped_column(Float)
+    vpn_version: Mapped[Optional[str]] = mapped_column(String(32))
+    vpn_explanation: Mapped[Optional[dict]] = mapped_column(JSONB)
+
+    task_anomaly: Mapped[Optional[str]] = mapped_column(String(32))
+    anomaly_confidence: Mapped[Optional[float]] = mapped_column(Float)
+    anomaly_version: Mapped[Optional[str]] = mapped_column(String(32))
+    anomaly_explanation: Mapped[Optional[dict]] = mapped_column(JSONB)
+
     # JSON summary
     summary: Mapped[Optional[dict]] = mapped_column(JSONB)
