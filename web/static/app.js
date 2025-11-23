@@ -90,7 +90,6 @@ const featureTranslations = {
   confidence: 'Уверенность',
   score: 'Счёт',
   summary: 'Сводка',
-
 };
 
 function translateFeatureKey(key) {
@@ -981,6 +980,7 @@ function renderMlSection() {
     const metricsBox = card.querySelector('[data-role="metrics"]');
     const driftBox = card.querySelector('[data-role="drift"]');
     const activeBox = card.querySelector('[data-role="active"]');
+    const actions = card.querySelectorAll('[data-action]');
     const versions = state.ml.versions[task] || [];
     const activeFromVersions = versions.find((v) => v.active);
     const statusActive = state.ml.active?.[task];
@@ -992,46 +992,57 @@ function renderMlSection() {
 
     if (select) {
       select.innerHTML = '';
-      versions.forEach((item, index) => {
-        const option = document.createElement('option');
-        option.value = item.version;
-        option.textContent = item.version;
-        if (
-          String(item.version) === String(activeVersion) ||
-          (!activeVersion && index === 0)
-        ) {
-          option.selected = true;
-        }
-        select.appendChild(option);
-      });
-
       if (!versions.length) {
         const emptyOption = document.createElement('option');
-        emptyOption.textContent = '—';
+        emptyOption.textContent = 'Нет доступных моделей';
         emptyOption.value = '';
         emptyOption.selected = true;
         select.appendChild(emptyOption);
-      }
+        select.disabled = true;
+        card.classList.add('ml-card-empty');
+      } else {
+        card.classList.remove('ml-card-empty');
+        select.disabled = false;
+        versions.forEach((item, index) => {
+          const option = document.createElement('option');
+          option.value = item.version;
+          option.textContent = item.version;
+          if (
+            String(item.version) === String(activeVersion) ||
+            (!activeVersion && index === 0)
+          ) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        });
 
-      if (activeVersion && select.options.length) {
-        const matchedOption = Array.from(select.options).find(
-          (opt) => String(opt.value) === String(activeVersion)
-        );
-        if (matchedOption) {
-          select.value = matchedOption.value;
-        } else if (select.options[0]) {
-          select.options[0].selected = true;
-          activeVersion = select.value;
+        if (activeVersion && select.options.length) {
+          const matchedOption = Array.from(select.options).find(
+            (opt) => String(opt.value) === String(activeVersion)
+          );
+          if (matchedOption) {
+            select.value = matchedOption.value;
+          } else if (select.options[0]) {
+            select.options[0].selected = true;
+            activeVersion = select.value;
+          }
         }
       }
     }
+
+    actions.forEach((btn) => {
+      btn.disabled = !versions.length;
+      btn.classList.toggle('ghost', !versions.length && btn.dataset.action !== 'validate');
+    });
 
     const resolvedActiveVersion =
       activeVersion || (select && select.value) || (versions[0] && versions[0].version);
     if (activeBox) {
       activeBox.textContent = resolvedActiveVersion
         ? `Активна: ${resolvedActiveVersion}`
-        : 'Нет активной версии';
+        : versions.length
+          ? 'Нет активной версии'
+          : 'Нет доступных моделей';
     }
 
     const metricsSource =

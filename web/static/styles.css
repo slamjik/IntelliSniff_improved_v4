@@ -752,6 +752,10 @@ td {
   gap: 12px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+.ml-card.ml-card-empty {
+  opacity: 0.9;
+  border-style: dashed;
+}
 
 .ml-card-warning {
   border-color: rgba(250, 204, 21, 0.5);

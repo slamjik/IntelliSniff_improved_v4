@@ -73,7 +73,10 @@ class AutoUpdater:
 
     def validate_and_maybe_activate(self, task: str, model_filename: str, dataset_path: Optional[str] = None) -> Dict[str, object]:
         task = task.lower()
-        candidate_path = (self.model_manager.base_dir / "models" / model_filename).resolve()
+        candidate_path = (self.model_manager.base_dir / "models" / task / model_filename).resolve()
+        if not candidate_path.exists():
+            fallback = (self.model_manager.base_dir / "models" / model_filename).resolve()
+            candidate_path = fallback
         if not candidate_path.exists():
             raise FileNotFoundError(candidate_path)
         dataset_file = Path(dataset_path) if dataset_path else self.candidates_path
@@ -87,7 +90,8 @@ class AutoUpdater:
                 "trained_at": report.evaluated_at,
                 "notes": f"Auto-validated on {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(report.evaluated_at))}",
             }
-            self.model_manager.register_model(task, model_filename, f"models/{model_filename}", metadata=metadata)
+            storage_path = f"models/{task}/{model_filename}" if (self.model_manager.base_dir / "models" / task / model_filename).exists() else f"models/{model_filename}"
+            self.model_manager.register_model(task, model_filename, storage_path, metadata=metadata)
             self.model_manager.update_metrics(task, model_filename, report.metrics)
             self.model_manager.switch_model(task, model_filename)
             event_bus.publish("model_update", {

@@ -233,9 +233,8 @@ def api_predict(payload: PredictRequest, user: str = Depends(get_current_usernam
 
 @app.post("/switch_model")
 def api_switch_model(payload: SwitchModelRequest, user: str = Depends(get_current_username)):
-    version_int = int(payload.version)
-    model_manager.set_active_model(payload.task, version_int)
-    return {"status": "ok", "task": payload.task, "active_version": version_int}
+    model_manager.set_active_model(payload.task, payload.version)
+    return {"status": "ok", "task": payload.task, "active_version": payload.version}
 
 
 @app.get("/get_versions")
@@ -273,7 +272,7 @@ def api_get_versions(
 
         versions.append({
             "version": ver,
-            "active": (ver == active_version)
+            "active": (str(ver) == str(active_version))
         })
 
     return {"task": task, "versions": versions}
