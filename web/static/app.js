@@ -49,6 +49,141 @@ function roundDisplayNumber(value) {
   return Number(num.toFixed(digits));
 }
 
+function detectAddressType(value) {
+  if (!value) return null;
+  const normalized = String(value).trim();
+  const macRegex = /^([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}$/;
+  const ipv4Regex = /^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$/;
+  const looksLikeIpv6 = normalized.includes(':') && normalized.replace(/:/g, '').length >= 3;
+  if (macRegex.test(normalized)) return 'mac';
+  if (ipv4Regex.test(normalized) || looksLikeIpv6) return 'ip';
+  return null;
+}
+
+function formatSourceDestination(value, role = 'Адрес') {
+  if (!value) return '—';
+  const type = detectAddressType(value);
+  const label = type === 'mac' ? 'MAC' : type === 'ip' ? 'IP' : role;
+  return `${label}: ${value}`;
+}
+
+function mapProtocolToName(proto) {
+  if (proto === null || proto === undefined || proto === '') return 'Unknown';
+  const protoMap = {
+    1: 'ICMP',
+    2: 'IGMP',
+    6: 'TCP',
+    17: 'UDP',
+    47: 'GRE',
+    50: 'ESP',
+    51: 'AH',
+    132: 'SCTP',
+  };
+  const numeric = Number(proto);
+  if (!Number.isNaN(numeric) && protoMap[numeric]) return protoMap[numeric];
+  const normalized = String(proto).trim().toUpperCase();
+  return protoMap[normalized] || normalized;
+}
+
+function handleNegativeValues(flow) {
+  const clampFields = ['packets', 'bytes', 'packets_per_sec', 'bytes_per_sec', 'avg_pkt_size'];
+  clampFields.forEach((field) => {
+    if (flow[field] === undefined || flow[field] === null) return;
+    const value = Number(flow[field]);
+    flow[field] = Number.isFinite(value) ? Math.max(0, value) : 0;
+  });
+  if (flow.summary && typeof flow.summary === 'object') {
+    ['пакетов_в_сек', 'байт_в_сек', 'средний_размер_пакета'].forEach((key) => {
+      if (key in flow.summary) {
+        const value = Number(flow.summary[key]);
+        flow.summary[key] = Number.isFinite(value) ? Math.max(0, value) : 0;
+      }
+    });
+  }
+  return flow;
+}
+
+function modelExplanation(task, label, flow) {
+  const version = flow.model_version || flow.summary?.['модель'];
+  const modelLabel = task === 'vpn' ? 'VPN-модель' : task === 'anomaly' ? 'Модель аномалий' : 'Модель атак';
+  const verdictMap = {
+    attack: { positive: 'Обнаружена атака', negative: 'Трафик выглядит нормальным' },
+    vpn: { positive: 'Трафик определён как VPN', negative: 'Трафик без VPN' },
+    anomaly: { positive: 'Аномалия обнаружена', negative: 'Отклонений не найдено' },
+  };
+  const verdictSet = verdictMap[task] || verdictMap.attack;
+  const labelStr = String(label).toLowerCase();
+  let verdict = 'Метка не определена';
+  if (labelStr === '1' || labelStr === 'attack' || labelStr === 'vpn') verdict = verdictSet.positive;
+  else if (labelStr === '0' || labelStr === 'benign' || labelStr === 'normal') verdict = verdictSet.negative;
+  else if (labelStr === 'error') verdict = 'Ошибка классификации';
+  else if (labelStr === 'unknown') verdict = 'Классификация неуверенная';
+  return `${modelLabel}${version ? ` v${version}` : ''}: ${verdict}`;
+}
+
+function processTrafficLabels(flow) {
+  const task = flow.model_task || flow.summary?.task || 'attack';
+  const labelRaw = flow.label;
+  const labelNameRaw = flow.label_name;
+  const isNumeric = labelRaw !== null && labelRaw !== undefined && labelRaw !== '' && !Number.isNaN(Number(labelRaw));
+  const labelStr = labelRaw === undefined || labelRaw === null || labelRaw === '' ? 'unknown' : String(labelRaw).toLowerCase();
+  const taskVerdicts = {
+    attack: { positive: 'Атака', negative: 'Нормальный трафик' },
+    vpn: { positive: 'VPN трафик', negative: 'Без VPN' },
+    anomaly: { positive: 'Аномалия', negative: 'Без аномалий' },
+  };
+  const verdict = taskVerdicts[task] || taskVerdicts.attack;
+
+  let normalizedLabel = labelStr;
+  let labelName = labelNameRaw || undefined;
+
+  if (isNumeric) {
+    if (Number(labelRaw) === 1) {
+      normalizedLabel = '1';
+      labelName = verdict.positive;
+    } else if (Number(labelRaw) === 0) {
+      normalizedLabel = '0';
+      labelName = verdict.negative;
+    }
+  }
+
+  if (!labelName) {
+    if (normalizedLabel === 'unknown') labelName = 'Неопределено';
+    else if (normalizedLabel === 'error') labelName = 'Ошибка модели';
+    else labelName = normalizedLabel;
+  }
+
+  const explanation = modelExplanation(task, normalizedLabel, flow);
+
+  return {
+    ...flow,
+    label: normalizedLabel,
+    label_name: labelName,
+    label_display: labelName,
+    label_explanation: explanation,
+  };
+}
+
+function checkUnknownLabelsIssue(flow) {
+  if (!flow) return flow;
+  const label = String(flow.label || '').toLowerCase();
+  const name = String(flow.label_name || '').toLowerCase();
+
+  if (label === 'unknown' && (name === '0' || name === 'нормальный трафик' || name === 'normal')) {
+    flow.label = '0';
+  }
+
+  if ((label === '0' || label === '1') && (!flow.label_name || flow.label_name.toLowerCase() === 'unknown')) {
+    const processed = processTrafficLabels(flow);
+    flow.label = processed.label;
+    flow.label_name = processed.label_name;
+    flow.label_display = processed.label_display;
+    flow.label_explanation = processed.label_explanation;
+  }
+
+  return flow;
+}
+
 function truncateString(value, maxLen = 60) {
   if (typeof value !== 'string') return value;
   return value.length > maxLen ? `${value.slice(0, maxLen - 1)}…` : value;
@@ -213,7 +348,7 @@ function updateCards() {
   ui.bandwidth.textContent = `${formatNumber(avgBandwidth / 1024, 1)} КБ/с`;
   const last = state.flows[0];
   if (last) {
-    ui.lastFlowLabel.textContent = `${last.label || '—'} (${formatNumber(last.score * 100, 0)}%)`;
+    ui.lastFlowLabel.textContent = `${last.label_display || last.label || '—'} (${formatNumber((last.score || last.score === 0 ? last.score : 0) * 100, 0)}%)`;
     const hints = [];
     if (last.summary) {
       const keys = ['tls_sni', 'http_host', 'dns_query', 'app'];
@@ -225,6 +360,9 @@ function updateCards() {
     if (!hints.length) {
       hints.push(`Пакеты: ${last.packets}, байты: ${last.bytes}`);
     }
+    if (last.label_explanation) {
+      hints.push(last.label_explanation);
+    }
     ui.lastFlowSummary.textContent = hints.join(' · ');
   }
 }
@@ -232,7 +370,7 @@ function updateCards() {
 function isBenign(label) {
   if (!label) return false;
   const normalized = String(label).toLowerCase();
-  return ['benign', 'normal', 'web', 'allow'].includes(normalized);
+  return ['benign', 'normal', 'web', 'allow', '0'].includes(normalized);
 }
 
 let labelsChart;
@@ -347,9 +485,13 @@ function renderTable() {
     const candidate = [
       flow.src,
       flow.dst,
+      flow.src_display,
+      flow.dst_display,
       flow.proto,
+      flow.proto_name,
       flow.label,
       flow.label_name,
+      flow.label_explanation,
       flow.sport,
       flow.dport,
       JSON.stringify(flow.summary || {}),
@@ -364,7 +506,7 @@ function renderTable() {
   // Генерация строк таблицы
   tbody.innerHTML = filtered
     .map((flow) => {
-      const labelName = flow.label_name || flow.label || 'Unknown';
+      const labelName = flow.label_display || flow.label_name || flow.label || 'Unknown';
       const score = flow.score !== undefined ? `${Math.round(flow.score * 100)}%` : '—';
 
       // Определяем цветовую метку риска
@@ -408,15 +550,15 @@ function renderTable() {
       return `
         <tr>
           <td>${formatDate(flow.ts)}</td>
-          <td>${flow.src || ''}</td>
-          <td>${flow.dst || ''}</td>
+          <td>${flow.src_display || flow.src || ''}</td>
+          <td>${flow.dst_display || flow.dst || ''}</td>
           <td>${flow.sport || ''} → ${flow.dport || ''}</td>
-          <td>${flow.proto || ''}</td>
+          <td>${flow.proto_name || flow.proto || ''}</td>
           <td><span style="color:${labelColor}; font-weight:600">${labelName}</span></td>
           <td>${score}</td>
           <td>${formatNumber(flow.packets)}</td>
           <td>${formatNumber(flow.bytes)}</td>
-          <td>${summaryChips.join(' ')}</td>
+          <td>${summaryChips.join(' ')}${flow.label_explanation ? `<span class="summary-chip">${escapeHtml(flow.label_explanation)}</span>` : ''}</td>
         </tr>`;
     })
     .join('');
@@ -441,13 +583,23 @@ function updateTraffic(flow) {
   if (state.trafficHistory.length > 40) state.trafficHistory.shift();
 }
 
+function normalizeFlowEntry(flow) {
+  const safeFlow = handleNegativeValues({ ...flow });
+  safeFlow.src_display = formatSourceDestination(safeFlow.src, 'Источник');
+  safeFlow.dst_display = formatSourceDestination(safeFlow.dst, 'Назначение');
+  safeFlow.proto_name = mapProtocolToName(safeFlow.proto);
+  const labeled = processTrafficLabels(safeFlow);
+  return checkUnknownLabelsIssue(labeled);
+}
+
 function addFlow(flow) {
   if (!flow) return;
-  state.flows.unshift(flow);
+  const normalized = normalizeFlowEntry(flow);
+  state.flows.unshift(normalized);
   if (state.flows.length > 300) state.flows.pop();
-  updateLabelCounts(flow);
-  updateDestinations(flow);
-  updateTraffic(flow);
+  updateLabelCounts(normalized);
+  updateDestinations(normalized);
+  updateTraffic(normalized);
   updateLabelFilterOptions();
   updateCards();
   updateCharts();
