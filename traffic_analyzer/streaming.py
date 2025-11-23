@@ -1,4 +1,5 @@
 import logging
+import logging
 import math
 import time
 import threading
@@ -461,14 +462,64 @@ def _emit_flow(key):
 
     predictor = get_predictor()
 
-    try:
-        features_payload = {**feats, **hints, 'iface': flow.iface}
-        if 'duration' not in features_payload:
-            features_payload['duration'] = features_payload.get('flow_duration', feats.get('duration'))
-        res = predictor.predict(features_payload, task='attack')
-    except Exception:
-        log.exception("Model prediction error")
-        res = {'label': 'error', 'label_name': 'Prediction error', 'confidence': 0.0, 'explanation': []}
+    def _predict_task(task_name):
+        try:
+            features_payload = {**feats, **hints, 'iface': flow.iface}
+            if 'duration' not in features_payload:
+                features_payload['duration'] = features_payload.get('flow_duration', feats.get('duration'))
+            raw = predictor.predict(features_payload, task=task_name)
+        except Exception:
+            log.exception("Model prediction error for task %s", task_name)
+            raw = {
+                'label': 'error',
+                'label_name': 'Prediction error',
+                'confidence': 0.0,
+                'explanation': [],
+                'task': task_name,
+            }
+        confidence = float(raw.get('confidence') or raw.get('score') or 0.0)
+        label = raw.get('label', 'unknown')
+        label_name = raw.get('label_name') or str(label)
+        explanation = raw.get('explanation') or []
+        version = raw.get('version')
+        return {
+            'task': task_name,
+            'label': label,
+            'label_name': label_name,
+            'confidence': confidence,
+            'version': version,
+            'explanation': explanation,
+            'raw': raw,
+        }
+
+    def _is_positive(task_name, prediction):
+        value = str(prediction.get('label') or prediction.get('label_name') or '').lower()
+        if task_name == 'vpn':
+            return any(word in value for word in ('vpn', '1', 'vpn_traffic'))
+        if task_name == 'anomaly':
+            return any(word in value for word in ('anomaly', 'anom', 'outlier', '1'))
+        return any(word in value for word in (
+            'attack', 'malicious', 'botnet', 'exploit', 'ddos', 'dos', 'scan', 'brute', '1'
+        ))
+
+    predictions = {task: _predict_task(task) for task in ('attack', 'vpn', 'anomaly')}
+
+    def _select_final_label():
+        priority = ('vpn', 'attack', 'anomaly')
+        display_map = {
+            'vpn': 'VPN-трафик',
+            'attack': 'Атака',
+            'anomaly': 'Аномалия',
+            'normal': 'Нормальный трафик',
+        }
+        for task_name in priority:
+            pred = predictions.get(task_name) or {}
+            if _is_positive(task_name, pred):
+                return task_name, display_map[task_name], pred.get('confidence', 0.0)
+        return 'normal', display_map['normal'], predictions.get('attack', {}).get('confidence', 0.0)
+
+    final_task, final_label_name, final_score = _select_final_label()
+    final_label = 'vpn' if final_task == 'vpn' else final_task if final_task != 'normal' else 'benign'
 
     duration_ms = int(max(0.0, (flow.last_ts - flow.first_ts)) * 1000)
     packets_per_sec = float(feats.get('pkts_per_s') or 0.0)
@@ -482,16 +533,34 @@ def _emit_flow(key):
         'пакетов_в_сек': round(packets_per_sec, 2),
         'байт_в_сек': round(bytes_per_sec, 2),
         'средний_размер_пакета': round(avg_pkt_size, 2),
-        'модель': res.get('version'),
-        'уверенность': round(res.get('confidence', 0.0), 3),
+        'модель': predictions['attack'].get('version'),
+        'уверенность': round(final_score, 3),
         **hints,
     }
 
-    if res.get('explanation'):
-        summary_dict['важные_признаки'] = res['explanation']
+    models_summary = {}
+    for task_name, pred in predictions.items():
+        if not pred:
+            continue
+        models_summary[task_name] = {
+            'label': pred.get('label'),
+            'label_name': pred.get('label_name'),
+            'confidence': pred.get('confidence'),
+            'version': pred.get('version'),
+        }
+        if pred.get('explanation'):
+            models_summary[task_name]['explanation'] = pred.get('explanation')
 
-    if res.get('drift'):
-        summary_dict['drift'] = res['drift']
+    if models_summary:
+        summary_dict['models'] = models_summary
+
+    if predictions['attack'].get('explanation'):
+        summary_dict['важные_признаки'] = predictions['attack']['explanation']
+
+    for task_name, pred in predictions.items():
+        drift_info = pred.get('raw', {}).get('drift')
+        if drift_info:
+            summary_dict.setdefault('drift', {})[task_name] = drift_info
 
     flow_dict = {
         'ts': int(flow.last_ts * 1000),
@@ -503,20 +572,33 @@ def _emit_flow(key):
         'proto': key.proto,
         'packets': flow.packets,
         'bytes': flow.bytes,
-        'label': res.get('label'),
-        'label_name': res.get('label_name', res.get('label', 'Unknown')),
-        'score': float(res.get('confidence') or res.get('score') or 0.0),
+        'label': final_label,
+        'label_name': final_label_name,
+        'score': float(final_score),
         'summary': summary_dict,
         'duration_ms': duration_ms,
         'packets_per_sec': packets_per_sec,
         'bytes_per_sec': bytes_per_sec,
         'avg_pkt_size': avg_pkt_size,
-        'model_version': res.get('version'),
-        'model_task': res.get('task'),
+        'model_version': predictions['attack'].get('version'),
+        'model_task': final_task,
+        'task_attack': predictions['attack'].get('label'),
+        'attack_confidence': predictions['attack'].get('confidence'),
+        'attack_version': predictions['attack'].get('version'),
+        'attack_explanation': predictions['attack'].get('explanation'),
+        'task_vpn': predictions['vpn'].get('label'),
+        'vpn_confidence': predictions['vpn'].get('confidence'),
+        'vpn_version': predictions['vpn'].get('version'),
+        'vpn_explanation': predictions['vpn'].get('explanation'),
+        'task_anomaly': predictions['anomaly'].get('label'),
+        'anomaly_confidence': predictions['anomaly'].get('confidence'),
+        'anomaly_version': predictions['anomaly'].get('version'),
+        'anomaly_explanation': predictions['anomaly'].get('explanation'),
+        'models': models_summary,
     }
 
     try:
-        record_flow_emission(key, flow, res)
+        record_flow_emission(key, flow, {'label': final_label, 'confidence': final_score})
     except Exception:
         log.warning("Session flow logging failed", exc_info=True)
 
@@ -527,9 +609,11 @@ def _emit_flow(key):
 
     try:
         publish('flow', flow_dict)
-        publish('ml_prediction', res)
+        for pred in predictions.values():
+            if pred:
+                publish('ml_prediction', pred.get('raw') or pred)
     except Exception:
         log.exception("Event publish error")
 
     log.info("[FLOW_EMIT] %s -> %s (label=%s | name=%s | score=%.3f)",
-             key, res, res.get('label'), res.get('label_name'), res.get('score'))
+             key, predictions, final_label, final_label_name, final_score)
