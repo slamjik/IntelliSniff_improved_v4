@@ -90,6 +90,7 @@ const featureTranslations = {
   confidence: 'Уверенность',
   score: 'Счёт',
   summary: 'Сводка',
+
 };
 
 function translateFeatureKey(key) {
