@@ -1,0 +1,26 @@
+{
+  "attack": {
+    "active": {
+      "version": 1,
+      "file": "C:\\Users\\Olega\\PycharmProjects\\IntelliSniff_improved_v4\\ml\\data\\attack_model_1.joblib"
+    },
+    "versions": [
+      {
+        "version": 1,
+        "file": "C:\\Users\\Olega\\PycharmProjects\\IntelliSniff_improved_v4\\ml\\data\\attack_model_1.joblib"
+      }
+    ]
+  },
+  "vpn": {
+    "active": {
+      "version": 1,
+      "file": "C:\\Users\\Olega\\PycharmProjects\\IntelliSniff_improved_v4\\ml\\data\\vpn_model_1.joblib"
+    },
+    "versions": [
+      {
+        "version": 1,
+        "file": "C:\\Users\\Olega\\PycharmProjects\\IntelliSniff_improved_v4\\ml\\data\\vpn_model_1.joblib"
+      }
+    ]
+  }
+}

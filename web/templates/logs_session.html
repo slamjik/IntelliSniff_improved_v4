@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>IntelliSniff — Сессия</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+  <script defer src="{{ url_for('static', path='logs.js') }}"></script>
+</head>
+<body data-page="session" data-session-id="{{ session_id }}">
+  <div id="authOverlay" class="auth-overlay hidden">
+    <form id="authForm" class="auth-card">
+      <h2>Вход в IntelliSniff</h2>
+      <p class="auth-subtitle">Используйте учётную запись администратора (HTTP Basic).</p>
+      <label>
+        Логин
+        <input type="text" id="authLogin" autocomplete="username" required>
+      </label>
+      <label>
+        Пароль
+        <input type="password" id="authPassword" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Войти</button>
+      <p class="auth-hint">По умолчанию: <code>admin / changeme</code>.</p>
+    </form>
+  </div>
+
+  <div class="logs-layout">
+    <div class="logs-header">
+      <div class="logs-title">
+        <a href="/logs" class="nav-btn">← К журналу</a>
+        <h1>Сессия #{{ session_id }}</h1>
+        <div class="logs-subtitle">Детали выполнения и последние потоки</div>
+      </div>
+    </div>
+
+    <div id="sessionInfo" class="glass-card" style="margin-bottom:16px;"></div>
+
+    <div class="glass-card" style="margin-bottom:16px;">
+      <h3>Последние действия</h3>
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Тип события</th>
+            <th>Описание</th>
+          </tr>
+        </thead>
+        <tbody id="sessionActions"></tbody>
+      </table>
+    </div>
+
+    <div class="glass-card">
+      <h3>Последние 10 потоков</h3>
+      <table class="flows-table">
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Маршрут</th>
+            <th>Байты</th>
+            <th>Пакеты</th>
+            <th>Протокол</th>
+            <th>Метка</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sessionFlows"></tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,7 +1,18 @@
+"""
+Training script for IntelliSniff ML model.
+
+Особенности:
+ - Читает список признаков из ml/data/features.json
+ - Обучает модель только на этих признаках
+ - Сохраняет модель в model.joblib вместе со списком признаков
+ - Полностью совместим с новым inference.py
+"""
+
 import argparse
 import os
 import sys
 import time
+import json
 import logging
 import joblib
 import numpy as np
@@ -9,35 +20,64 @@ import pandas as pd
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
-    accuracy_score,
     classification_report,
+    accuracy_score,
     confusion_matrix,
 )
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_class_weight
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-# === ПУТИ ===============================================================
+# ============================================================================
+# Пути
+# ============================================================================
+
 BASE_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 MODEL_PATH = os.path.join(DATA_DIR, "model.joblib")
 DATASET_PATH = os.path.join(BASE_DIR, "..", "datasets", "merged_detailed.parquet")
+FEATURES_PATH = os.path.join(DATA_DIR, "features.json")
 
 log = logging.getLogger("IntelliSniff.train_model")
 
 
-# === ЗАГРУЗКА ============================================================
+# ============================================================================
+# Загрузка списка признаков
+# ============================================================================
+
+def load_feature_list(path=FEATURES_PATH):
+    """
+    Загружает список признаков из JSON.
+    Это *единственный источник истины* для обучения и инференса.
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"❌ Файл списка признаков не найден: {path}")
+
+    with open(path, "r") as f:
+        features = json.load(f)
+
+    print(f"📌 Загружено признаков: {len(features)} шт.")
+    return features
+
+
+# ============================================================================
+# Загрузка датасета
+# ============================================================================
+
 def load_dataset(path=DATASET_PATH, label_type="binary"):
-    """Загружает parquet и подготавливает X, y"""
-    print(f"📂 Loading dataset from {path}")
+    """
+    Загружает parquet-файл с объединёнными CICIDS / VPN / Benign данными.
+    """
+    print(f"📂 Загружаю датасет: {path}")
     df = pd.read_parquet(path)
 
-    # выбор метки
+    # Выбор метки
     if label_type == "multi" and "label_multi" in df.columns:
         y = LabelEncoder().fit_transform(df["label_multi"])
     elif "label_binary" in df.columns:
@@ -45,49 +85,55 @@ def load_dataset(path=DATASET_PATH, label_type="binary"):
     elif "label" in df.columns:
         y = df["label"]
     else:
-        raise ValueError("❌ Dataset missing label column")
+        raise ValueError("❌ В датасете нет label / label_binary / label_multi")
 
-    # выбор признаков
-    drop_cols = [c for c in ["label", "label_binary", "label_multi"] if c in df.columns]
-    X = df.drop(columns=drop_cols, errors="ignore").select_dtypes(include=[np.number]).fillna(0).astype(np.float32)
-
-    print(f"✅ Dataset loaded: {X.shape[0]:,} rows, {X.shape[1]} features")
-    return X, y
+    print(f"🔎 Найдено {df.shape[0]:,} строк и {df.shape[1]} столбцов")
+    return df, y
 
 
-# === РАСШИРЕННОЕ ОБУЧЕНИЕ ==============================================
-def train_and_save(X, y, out_path=MODEL_PATH):
-    """Обучает RandomForest с автооптимизацией и сохраняет модель"""
-    if os.path.exists(out_path):
-        try:
-            os.remove(out_path)
-            print(f"🧹 Старый файл модели удалён: {out_path}")
-        except PermissionError:
-            print(f"⚠️ Не удалось удалить старую модель. Закрой процессы и повтори.")
-            return None
+# ============================================================================
+# Обучение модели
+# ============================================================================
 
-    print("⚙️  Splitting train/test...")
+def train_and_save(df, y, features, out_path=MODEL_PATH):
+    """
+    Обучает RandomForestClassifier на фиксированном списке признаков.
+    """
+
+    print("\n🧩 Используем признаки:")
+    for f in features:
+        print("  •", f)
+
+    # На всякий случай проверяем, что все фичи есть в датасете
+    missing = [f for f in features if f not in df.columns]
+    if missing:
+        raise ValueError(f"❌ В датасете отсутствуют признаки: {missing}")
+
+    # Формируем X
+    X = df[features].fillna(0).astype(np.float32)
+    print(f"📊 Матрица признаков: {X.shape[0]:,} строк × {X.shape[1]} фичей")
+
+    # Разбивка train/test
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y if len(set(y)) > 1 else None
+        X, y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y,
     )
 
-    # 🧩 Ограничим выборку для RandomizedSearch, чтобы не упасть по памяти
-    if len(X_train) > 200_000:
-        print(f"⚙️ Dataset too large for full search ({len(X_train):,} rows) → sampling 200,000 for tuning...")
-        sample_idx = np.random.choice(len(X_train), 200_000, replace=False)
-        X_sample = X_train.iloc[sample_idx]
-        y_sample = y_train[sample_idx]  # ← вот это исправление
-    else:
-        X_sample, y_sample = X_train, y_train
-
-    # расчет весов классов
-    classes = np.unique(y_sample)
-    from sklearn.utils.class_weight import compute_class_weight
-    class_weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_sample)
+    # Весы классов
+    classes = np.unique(y_train)
+    class_weights = compute_class_weight("balanced", classes=classes, y=y_train)
     class_weight_dict = dict(zip(classes, class_weights))
 
-    print("🔍 Auto-tuning hyperparameters (RandomizedSearchCV)...")
-    rf_base = RandomForestClassifier(class_weight=class_weight_dict, random_state=42, n_jobs=-1)
+    # База модели
+    rf_base = RandomForestClassifier(
+        class_weight=class_weight_dict,
+        random_state=42,
+        n_jobs=-1,
+    )
+
+    # Гиперпараметры для RandomizedSearch
     param_dist = {
         "n_estimators": [200, 300, 400],
         "max_depth": [10, 20, 30, None],
@@ -96,7 +142,7 @@ def train_and_save(X, y, out_path=MODEL_PATH):
         "max_features": ["sqrt", "log2"],
     }
 
-    from sklearn.model_selection import RandomizedSearchCV
+    print("\n🔍 Подбор гиперпараметров...")
     search = RandomizedSearchCV(
         rf_base,
         param_distributions=param_dist,
@@ -107,83 +153,62 @@ def train_and_save(X, y, out_path=MODEL_PATH):
         verbose=1,
         random_state=42,
     )
-    search.fit(X_sample, y_sample)
-    clf = search.best_estimator_
 
-    print(f"🏆 Best Params: {search.best_params_}")
+    search.fit(X_train, y_train)
+    best_model = search.best_estimator_
 
-    print("🌲 Training optimized RandomForestClassifier on full data...")
-    clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
+    print(f"🏆 Лучшие параметры: {search.best_params_}")
 
-    print("\n📊 [TRAIN REPORT]")
-    from sklearn.metrics import classification_report, accuracy_score
+    print("🌲 Обучение финальной модели...")
+    best_model.fit(X_train, y_train)
+    y_pred = best_model.predict(X_test)
+
+    print("\n📊 ОТЧЁТ:")
     print(classification_report(y_test, y_pred, zero_division=0))
-    print(f"✅ Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+    print(f"🎯 Accuracy: {accuracy_score(y_test, y_pred):.4f}")
 
-    import seaborn as sns, matplotlib.pyplot as plt
-    from sklearn.metrics import confusion_matrix
+    # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
     plt.title("Confusion Matrix — IntelliSniff Model")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
+    plt.xlabel("Предсказано")
+    plt.ylabel("Истинный класс")
     plt.tight_layout()
     plt.savefig(os.path.join(DATA_DIR, "confusion_matrix.png"))
-    print(f"🖼️ Confusion matrix saved to {os.path.join(DATA_DIR, 'confusion_matrix.png')}")
+    print("🖼️ confusion_matrix.png сохранена.")
 
+    # Сохраняем bundle модели
     joblib.dump(
-        {"model": clf, "features": X.columns.tolist(), "trained_at": time.time()},
-        out_path,
+        {
+            "model": best_model,
+            "features": features,
+            "trained_at": time.time(),
+        },
+        out_path
     )
-    print(f"💾 Model saved to: {out_path}")
-    return out_path
 
-    # === ОЦЕНКА =======================================================
-    print("\n📊 [TRAIN REPORT]")
-    print(classification_report(y_test, y_pred, zero_division=0))
-    print(f"✅ Accuracy: {accuracy_score(y_test, y_pred):.4f}")
-
-    # === CONFUSION MATRIX ============================================
-    cm = confusion_matrix(y_test, y_pred)
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-    plt.title("Confusion Matrix — IntelliSniff Model")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.tight_layout()
-    plt.savefig(os.path.join(DATA_DIR, "confusion_matrix.png"))
-    print(f"🖼️ Confusion matrix saved to {os.path.join(DATA_DIR, 'confusion_matrix.png')}")
-
-    # === СОХРАНЕНИЕ ==================================================
-    joblib.dump(
-        {"model": clf, "features": X.columns.tolist(), "trained_at": time.time()},
-        out_path,
-    )
-    print(f"💾 Model saved to: {out_path}")
+    print(f"\n💾 Модель сохранена: {out_path}")
     return out_path
 
 
-# === ЗАПУСК ==============================================================
-def train_from_dataset(dataset_path=None, label_type="binary", out_path=MODEL_PATH):
-    dataset_path = dataset_path or DATASET_PATH
-    if not os.path.exists(dataset_path):
-        raise FileNotFoundError(f"Dataset not found: {dataset_path}")
-    X, y = load_dataset(path=dataset_path, label_type=label_type)
-    return train_and_save(X, y, out_path=out_path)
-
+# ============================================================================
+# MAIN
+# ============================================================================
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Train IntelliSniff model (enhanced)")
+    parser = argparse.ArgumentParser(description="Тренировка ML модели IntelliSniff")
     parser.add_argument("--dataset", type=str, default=None, help="Путь к parquet/csv датасету")
     parser.add_argument("--label-type", choices=["binary", "multi"], default="binary")
     args = parser.parse_args(argv)
 
     dataset_path = args.dataset or DATASET_PATH
-    result = train_from_dataset(dataset_path, args.label_type)
-    print(f"✅ Model trained from {dataset_path} -> {result}")
-    return result
+
+    df, y = load_dataset(dataset_path, args.label_type)
+    features = load_feature_list()
+
+    result = train_and_save(df, y, features, out_path=MODEL_PATH)
+    print(f"✅ Модель обучена и сохранена в: {result}")
 
 
 if __name__ == "__main__":

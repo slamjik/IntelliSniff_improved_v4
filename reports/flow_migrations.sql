@@ -1,0 +1,6 @@
+-- Column width adjustments for flow interfaces and related fields
+ALTER TABLE flows ALTER COLUMN iface TYPE VARCHAR(128);
+ALTER TABLE flows ALTER COLUMN src TYPE VARCHAR(128);
+ALTER TABLE flows ALTER COLUMN dst TYPE VARCHAR(128);
+ALTER TABLE flows ALTER COLUMN proto TYPE VARCHAR(32);
+ALTER TABLE flows ALTER COLUMN label_name TYPE VARCHAR(64);

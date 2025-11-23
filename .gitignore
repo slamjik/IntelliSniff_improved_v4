@@ -1,5 +1,4 @@
 # Модели и датасеты
-*.joblib
 *.pkl
 *.h5
 *.pt
@@ -13,7 +12,6 @@ data/
 __pycache__/
 *.pyc
 # Исключаем большие файлы
-*.joblib
 *.parquet
 *.zip
 *.csv
