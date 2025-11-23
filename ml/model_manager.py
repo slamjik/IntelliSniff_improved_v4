@@ -180,9 +180,9 @@ class ModelManager:
             reg_active = self._registry.get(task, {}).get("active")
             bundles = self._bundles.get(task, {})
             if reg_active and reg_active in bundles:
-                self._active[task] = reg_active
+                self._active[task] = str(reg_active)
             elif bundles:
-                self._active[task] = sorted(bundles.keys())[0]
+                self._active[task] = str(sorted(bundles.keys())[0])
             else:
                 self._active[task] = None
 
