@@ -4,6 +4,45 @@ const logState = {
   users: [],
 };
 
+const featureTranslations = {
+  model: 'Модель',
+  task: 'Задача',
+  attack: 'Атака',
+  vpn: 'VPN',
+  anomaly: 'Аномалия',
+  confidence: 'Уверенность',
+  score: 'Счёт',
+  summary: 'Сводка',
+  jsd: 'JSD (расхождение распределений)',
+  z_score: 'Z-оценка дрейфа',
+  drift: 'Дрейф',
+  fwd_packet_length_max: 'макс. длина прямых пакетов',
+  fwd_packet_length_min: 'мин. длина прямых пакетов',
+  fwd_packet_length_mean: 'средняя длина прямых пакетов',
+  fwd_packet_length_std: 'СКО длины прямых пакетов',
+  bwd_packet_length_max: 'макс. длина обратных пакетов',
+  bwd_packet_length_min: 'мин. длина обратных пакетов',
+  bwd_packet_length_mean: 'средняя длина обратных пакетов',
+  bwd_packet_length_std: 'СКО длины обратных пакетов',
+  flow_duration: 'длительность потока (мс)',
+  packet_length_mean: 'средняя длина пакетов',
+  packet_length_std: 'СКО длины пакетов',
+  flow_packets_per_second: 'пакетов в секунду',
+  flow_bytes_per_second: 'байтов в секунду',
+  fwd_packets_s: 'прямых пакетов в секунду',
+  bwd_packets_s: 'обратных пакетов в секунду',
+  tls_sni: 'TLS SNI',
+  http_host: 'HTTP хост',
+  dns_query: 'DNS запрос',
+  app: 'Приложение',
+};
+
+function translateFeatureKey(key) {
+  if (!key) return '';
+  if (featureTranslations[key] !== undefined) return featureTranslations[key];
+  return key.replace(/_/g, ' ').replace(/\b([a-zа-яё])/gi, (m) => m.toUpperCase());
+}
+
 function fmtDate(value) {
   if (!value) return '—';
   const dt = new Date(value);
@@ -59,6 +98,18 @@ function sanitizeJsonValue(value, { truncateStrings = false } = {}) {
   return String(value);
 }
 
+function localizeKeys(obj) {
+  if (Array.isArray(obj)) return obj.map((item) => localizeKeys(item));
+  if (obj && typeof obj === 'object') {
+    const normalized = {};
+    Object.entries(obj).forEach(([k, v]) => {
+      normalized[translateFeatureKey(k)] = localizeKeys(v);
+    });
+    return normalized;
+  }
+  return obj;
+}
+
 function formatInlineValue(value) {
   if (value === null) return 'null';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
@@ -73,13 +124,16 @@ function formatJsonInline(obj) {
     return escapeHtml(formatInlineValue(sanitizeJsonValue(obj, { truncateStrings: true })) || '—');
   }
   const sanitized = sanitizeJsonValue(obj, { truncateStrings: true });
-  const lines = Object.entries(sanitized).map(([key, val]) => `${escapeHtml(key)}: ${escapeHtml(formatInlineValue(val))}`);
+  const lines = Object.entries(sanitized).map(
+    ([key, val]) => `${escapeHtml(translateFeatureKey(key))}: ${escapeHtml(formatInlineValue(val))}`
+  );
   return lines.length ? lines.join('<br>') : '—';
 }
 
 function formatJsonPretty(obj) {
   const sanitized = sanitizeJsonValue(obj, { truncateStrings: false });
-  const pretty = JSON.stringify(sanitized, (k, v) => (typeof v === 'number' ? roundDisplayNumber(v) : v), 2);
+  const localized = localizeKeys(sanitized);
+  const pretty = JSON.stringify(localized, (k, v) => (typeof v === 'number' ? roundDisplayNumber(v) : v), 2);
   return `<pre class="json-pretty">${escapeHtml(pretty || '—')}</pre>`;
 }
 
