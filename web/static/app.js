@@ -86,6 +86,11 @@ const featureTranslations = {
   model_task: 'Задача модели',
   label: 'Метка',
   label_name: 'Имя метки',
+  model_version: 'Версия модели',
+  confidence: 'Уверенность',
+  score: 'Счёт',
+  summary: 'Сводка',
+
 };
 
 function translateFeatureKey(key) {
@@ -178,7 +183,7 @@ function formatSourceDestination(value, role = 'Адрес') {
 }
 
 function mapProtocolToName(proto) {
-  if (proto === null || proto === undefined || proto === '') return 'Unknown';
+  if (proto === null || proto === undefined || proto === '') return 'Неизвестно';
   const protoMap = {
     1: 'ICMP',
     2: 'IGMP',
@@ -343,11 +348,6 @@ function checkUnknownLabelsIssue(flow) {
   }
 
   return flow;
-}
-
-function truncateString(value, maxLen = 60) {
-  if (typeof value !== 'string') return value;
-  return value.length > maxLen ? `${value.slice(0, maxLen - 1)}…` : value;
 }
 
 function escapeHtml(value) {
