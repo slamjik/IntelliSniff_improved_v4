@@ -27,7 +27,7 @@ from . import capture, event_bus, storage
 from .ml_runtime import get_auto_updater, get_drift_detector, get_model_manager, get_predictor
 from .auth import get_current_username
 from app.api import get_router as get_app_router
-from app.db import session_scope
+from app.db import ensure_flow_schema, session_scope
 from app.models import Flow
 
 log = logging.getLogger("ta.api")
@@ -132,6 +132,11 @@ async def _broker_loop():
 
 @app.on_event("startup")
 async def startup_event():
+    # Make sure the primary database schema matches the ORM (runtime safety net)
+    try:
+        ensure_flow_schema()
+    except Exception:
+        log.exception("Failed to auto-sync flows table schema")
     asyncio.create_task(_broker_loop())
 
 

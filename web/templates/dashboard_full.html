@@ -129,22 +129,35 @@
     <div class="ml-predictions">
         <div class="ml-predictions-header">
             <h3>Последние предсказания моделей</h3>
-            <button id="refreshMl" class="ghost">Обновить</button>
+            <div class="ml-predictions-actions">
+                <label class="inline-label">Показывать
+                    <select id="mlPredictionsLimit">
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="all">Все</option>
+                    </select>
+                </label>
+                <button id="toggleMlPredictions" class="ghost">Скрыть список</button>
+                <button id="refreshMl" class="ghost">Обновить</button>
+            </div>
         </div>
-        <div class="ml-predictions-table">
-            <table id="mlPredictions">
-                <thead>
-                <tr>
-                    <th>Время</th>
-                    <th>Задача</th>
-                    <th>Метка</th>
-                    <th>Уверенность</th>
-                    <th>Версия</th>
-                    <th>Объяснение</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div id="mlPredictionsPanel" class="collapsible expanded">
+            <div class="ml-predictions-table">
+                <table id="mlPredictions">
+                    <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Модель</th>
+                        <th>Результат</th>
+                        <th>Уверенность</th>
+                        <th>Версия</th>
+                        <th>Объяснение</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </section>
@@ -197,10 +210,19 @@
         <h3>Последние потоки</h3>
         <div class="table-controls">
             <label>Поиск <input type="search" id="tableSearch" placeholder="IP, порт или метка"></label>
+            <label class="inline-label">Показывать
+                <select id="flowTableLimit">
+                    <option value="20">20</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="all">Все</option>
+                </select>
+            </label>
+            <button id="toggleFlows" class="ghost">Скрыть список</button>
             <span id="tableCounter">0 записей</span>
         </div>
     </div>
-    <div class="table-wrapper">
+    <div id="flowsPanel" class="table-wrapper collapsible expanded">
         <table id="flowsTable">
             <thead>
             <tr>

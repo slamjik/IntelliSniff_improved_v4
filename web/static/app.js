@@ -14,8 +14,112 @@ const state = {
     drift: {},
     autoUpdate: true,
     predictions: [],
+    predictionLimit: 20,
+  },
+  flowLimit: 50,
+  uiCollapsed: {
+    mlPredictions: false,
+    flows: false,
   },
 };
+
+const featureTranslations = {
+  model: 'Модель',
+  task: 'Задача',
+  attack: 'Атака',
+  vpn: 'VPN',
+  anomaly: 'Аномалия',
+  confidence: 'Уверенность',
+  score: 'Счёт',
+  summary: 'Сводка',
+  jsd: 'JSD (расхождение распределений)',
+  z_score: 'Z-оценка дрейфа',
+  drift: 'Дрейф',
+  model_version: 'Версия модели',
+  fwd_packet_length_max: 'макс. длина прямых пакетов',
+  fwd_packet_length_min: 'мин. длина прямых пакетов',
+  fwd_packet_length_mean: 'средняя длина прямых пакетов',
+  fwd_packet_length_std: 'СКО длины прямых пакетов',
+  bwd_packet_length_max: 'макс. длина обратных пакетов',
+  bwd_packet_length_min: 'мин. длина обратных пакетов',
+  bwd_packet_length_mean: 'средняя длина обратных пакетов',
+  bwd_packet_length_std: 'СКО длины обратных пакетов',
+  flow_duration: 'длительность потока (мс)',
+  flow_iat_mean: 'средний интервал между пакетами',
+  flow_iat_std: 'СКО интервалов между пакетами',
+  fwd_iat_total: 'сумма интервалов прямых пакетов',
+  bwd_iat_total: 'сумма интервалов обратных пакетов',
+  packet_length_mean: 'средняя длина пакетов',
+  packet_length_std: 'СКО длины пакетов',
+  flow_packets_per_second: 'пакетов в секунду',
+  flow_bytes_per_second: 'байтов в секунду',
+  fwd_packets_s: 'прямых пакетов в секунду',
+  bwd_packets_s: 'обратных пакетов в секунду',
+  fwd_bytes_b_avg: 'средний объём прямых байт',
+  bwd_bytes_b_avg: 'средний объём обратных байт',
+  init_win_bytes_forward: 'начальный размер окна (вперёд)',
+  init_win_bytes_backward: 'начальный размер окна (назад)',
+  active_mean: 'средняя активность',
+  idle_mean: 'средний простой',
+  min_seg_size_forward: 'минимальный размер сегмента (вперёд)',
+  avg_pkt_size: 'средний размер пакета',
+  avg_fwd_segment_size: 'средний размер сегмента вперёд',
+  avg_bwd_segment_size: 'средний размер сегмента назад',
+  max_active: 'макс. активность',
+  min_active: 'мин. активность',
+  max_idle: 'макс. простой',
+  min_idle: 'мин. простой',
+  urgent_pkts_total: 'число срочных пакетов',
+  flow_fin_flags_cnt: 'количество FIN флагов',
+  flow_syn_flags_cnt: 'количество SYN флагов',
+  flow_rst_flags_cnt: 'количество RST флагов',
+  flow_psh_flags_cnt: 'количество PSH флагов',
+  flow_ack_flags_cnt: 'количество ACK флагов',
+  flow_urg_flags_cnt: 'количество URG флагов',
+  flow_cwe_flags_cnt: 'количество CWE флагов',
+  flow_ece_flags_cnt: 'количество ECE флагов',
+  destination_port_entropy: 'энтропия порта назначения',
+  tls_sni: 'TLS SNI',
+  http_host: 'HTTP хост',
+  dns_query: 'DNS запрос',
+  app: 'Приложение',
+  model_task: 'Задача модели',
+  label: 'Метка',
+  label_name: 'Имя метки',
+};
+
+function translateFeatureKey(key) {
+  if (!key) return '';
+  if (featureTranslations[key] !== undefined) return featureTranslations[key];
+  return key.replace(/_/g, ' ').replace(/\b([a-zа-яё])/gi, (m) => m.toUpperCase());
+}
+
+function translateTaskName(task) {
+  const map = { attack: 'Детектор атак', vpn: 'Определение VPN', anomaly: 'Поиск аномалий' };
+  return map[task] || translateFeatureKey(task);
+}
+
+function translateDriftFlag(flag) {
+  if (flag === true) return 'Дрейф обнаружен: Да';
+  if (flag === false) return 'Дрейф обнаружен: Нет';
+  return 'Дрейф: данные недоступны';
+}
+
+function buildDriftSummary(driftInfo = {}) {
+  const jsd = driftInfo.jsd !== undefined ? Number(driftInfo.jsd) : null;
+  const z = driftInfo.z_score !== undefined ? Number(driftInfo.z_score) : null;
+  const detected = driftInfo.drift === true;
+  const jsdText = jsd !== null && Number.isFinite(jsd) ? jsd.toFixed(3) : '—';
+  const zText = z !== null && Number.isFinite(z) ? z.toFixed(2) : '—';
+  return `
+    <div class="drift-line"><strong>JSD (расхождение распределений):</strong> ${jsdText}</div>
+    <div class="drift-desc">JSD — мера различия между обучающим распределением признаков и текущим трафиком.</div>
+    <div class="drift-line"><strong>Z-оценка дрейфа:</strong> ${zText}</div>
+    <div class="drift-desc">Z-оценка показывает, насколько сильно текущие признаки отклоняются от обучающей выборки.</div>
+    <div class="drift-line ${detected ? 'drift-flag-warning' : ''}">${translateDriftFlag(driftInfo.drift === true)}</div>
+    <div class="drift-desc">Если JSD превышает порог, модель считает, что входящие данные изменились.</div>
+  `;
+}
 
 const ui = {};
 
@@ -38,6 +142,12 @@ function formatNumber(value, digits = 0) {
     maximumFractionDigits: digits,
     minimumFractionDigits: digits,
   });
+}
+
+function truncateString(value, maxLen = 80) {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  return str.length > maxLen ? `${str.slice(0, maxLen - 1)}…` : str;
 }
 
 function roundDisplayNumber(value) {
@@ -554,19 +664,23 @@ function renderTable() {
 
   ui.tableCounter.textContent = `${filtered.length} записей`;
 
+  const limit = state.flowLimit === 'all' ? null : Number(state.flowLimit) || 50;
+  const visible = limit ? filtered.slice(0, limit) : filtered;
+
   // Генерация строк таблицы
-  tbody.innerHTML = filtered
+  tbody.innerHTML = visible
     .map((flow) => {
-      const labelName = flow.label_display || flow.label_name || flow.label || 'Unknown';
+      const rawLabel = flow.label_display || flow.label_name || flow.label || 'Unknown';
+      const labelName = translateFeatureKey(rawLabel);
       const score = flow.score !== undefined ? `${Math.round(flow.score * 100)}%` : '—';
 
       // Определяем цветовую метку риска
       let labelColor = 'gray';
-      if (/normal|benign|allow/i.test(labelName)) labelColor = 'limegreen';
-      else if (/attack|malware|botnet|exploit/i.test(labelName)) labelColor = 'crimson';
-      else if (/scan|recon|brute/i.test(labelName)) labelColor = 'orange';
-      else if (/vpn/i.test(labelName)) labelColor = '#2563eb';
-      else if (/аномал|anomal/i.test(labelName)) labelColor = '#eab308';
+      if (/normal|benign|allow/i.test(rawLabel)) labelColor = 'limegreen';
+      else if (/attack|malware|botnet|exploit/i.test(rawLabel)) labelColor = 'crimson';
+      else if (/scan|recon|brute/i.test(rawLabel)) labelColor = 'orange';
+      else if (/vpn/i.test(rawLabel)) labelColor = '#2563eb';
+      else if (/аномал|anomal/i.test(rawLabel)) labelColor = '#eab308';
 
       // Чипы с полезными данными (SNI, DNS, HTTP и т.д.)
       const summaryChips = [];
@@ -574,18 +688,21 @@ function renderTable() {
         const interesting = ['модель', 'уверенность', 'tls_sni', 'http_host', 'dns_query', 'app'];
         for (const key of interesting) {
           if (flow.summary[key]) {
+            const translatedKey = translateFeatureKey(key);
             let value = flow.summary[key];
             if (key === 'уверенность') {
               value = `${formatNumber((Number(value) || 0) * 100, 1)}%`;
             }
-            summaryChips.push(`<span class="summary-chip">${key}: ${value}</span>`);
+            summaryChips.push(`<span class="summary-chip">${translatedKey}: ${value}</span>`);
           }
         }
         if (Array.isArray(flow.summary['важные_признаки'])) {
           flow.summary['важные_признаки'].slice(0, 2).forEach((item) => {
             if (item && item.feature) {
               const value = typeof item.value === 'number' ? item.value.toFixed(2) : item.value;
-              summaryChips.push(`<span class="summary-chip">${item.feature}: ${value}</span>`);
+              summaryChips.push(
+                `<span class="summary-chip" title="${translateFeatureKey(item.feature)}">${translateFeatureKey(item.feature)}: ${value}</span>`
+              );
             }
           });
         }
@@ -605,7 +722,9 @@ function renderTable() {
               if (item && item.feature) {
                 const value = typeof item.value === 'number' ? item.value.toFixed(2) : item.value;
                 summaryChips.push(
-                  `<span class="summary-chip">${modelNames[task].replace('Модель ', '')} · ${item.feature}: ${value}</span>`
+                  `<span class="summary-chip" title="${translateFeatureKey(item.feature)}">${
+                    modelNames[task].replace('Модель ', '')
+                  } · ${translateFeatureKey(item.feature)}: ${value}</span>`
                 );
               }
             });
@@ -637,6 +756,12 @@ function renderTable() {
         </tr>`;
     })
     .join('');
+
+  if (ui.flowsPanel && !state.uiCollapsed.flows) {
+    requestAnimationFrame(() => {
+      ui.flowsPanel.style.maxHeight = `${ui.flowsPanel.scrollHeight}px`;
+    });
+  }
 }
 
 
@@ -913,12 +1038,18 @@ function renderMlSection() {
       versions.find((v) => String(v.version) === String(select?.value || resolvedActiveVersion)) || null;
     if (metricsBox) {
       const metricsData = normalizeMetricFields(metricsSource || {});
+      const labels = {
+        metric_precision: 'Точность',
+        metric_recall: 'Полнота',
+        metric_f1: 'F1',
+        metric_drift_resilience: 'Устойчивость к дрейфу',
+      };
       const metrics = ['metric_precision', 'metric_recall', 'metric_f1', 'metric_drift_resilience']
         .map((key) => ({ key, value: metricsData[key] }))
         .filter((item) => item.value !== undefined && !Number.isNaN(Number(item.value)));
       if (metrics.length) {
         metricsBox.innerHTML = metrics
-          .map((m) => `<span>${m.key.replace('metric_', '').toUpperCase()}: ${(m.value * 100).toFixed(1)}%</span>`)
+          .map((m) => `<span><strong>${labels[m.key] || m.key}</strong>: ${(m.value * 100).toFixed(1)}%</span>`)
           .join('<span class="ml-metric-divider">·</span>');
       } else {
         metricsBox.innerHTML = '<span class="ml-metric-muted">Нет метрик</span>';
@@ -926,11 +1057,15 @@ function renderMlSection() {
     }
     if (driftBox) {
       const driftInfo = state.ml.drift?.[task];
-      if (driftInfo && driftInfo.drift) {
-        driftBox.textContent = `Дрейф! JSD ${Number(driftInfo.jsd || 0).toFixed(2)}, Z ${Number(driftInfo.z_score || 0).toFixed(2)}`;
-        card.classList.add('ml-card-warning');
+      if (driftInfo) {
+        driftBox.innerHTML = buildDriftSummary(driftInfo);
+        if (driftInfo.drift) {
+          card.classList.add('ml-card-warning');
+        } else {
+          card.classList.remove('ml-card-warning');
+        }
       } else {
-        driftBox.textContent = 'Дрейф не обнаружен';
+        driftBox.innerHTML = '<div class="drift-line">Дрейф: данные недоступны</div>';
         card.classList.remove('ml-card-warning');
       }
     }
@@ -939,25 +1074,71 @@ function renderMlSection() {
 
 function renderMlPredictions() {
   if (!ui.mlPredictionsBody) return;
+  const limit = state.ml.predictionLimit === 'all' ? null : Number(state.ml.predictionLimit) || 20;
+  const subset = limit ? state.ml.predictions.slice(0, limit) : [...state.ml.predictions];
   ui.mlPredictionsBody.innerHTML = '';
-  state.ml.predictions.slice(0, 40).forEach((pred) => {
+
+  subset.forEach((pred) => {
     const tr = document.createElement('tr');
     const ts = pred.timestamp ? formatDate(Number(pred.timestamp) * 1000) : '—';
-    const explanation = Array.isArray(pred.explanation)
+    const taskName = translateTaskName(pred.task || 'attack');
+    const labelText = translateFeatureKey(pred.label_name || pred.label || '—');
+    const confText = `${formatNumber((pred.confidence || pred.score || 0) * 100, 1)}%`;
+    const explanationText = Array.isArray(pred.explanation)
       ? pred.explanation
-          .map((item) => `${item.feature}: ${item.value?.toFixed ? item.value.toFixed(2) : item.value}`)
+          .map((item) => `${translateFeatureKey(item.feature)}: ${
+            item.value?.toFixed ? item.value.toFixed(2) : item.value
+          }`)
           .join(', ')
-      : '';
+      : pred.explanation && typeof pred.explanation === 'object'
+        ? Object.entries(pred.explanation)
+            .map(([k, v]) => `${translateFeatureKey(k)}: ${v}`)
+            .join(', ')
+        : pred.explanation || '';
+    const safeExplanation = explanationText
+      ? `<span class="chip-badge" title="${escapeHtml(explanationText)}">${escapeHtml(truncateString(explanationText, 80))}</span>`
+      : '—';
+
     tr.innerHTML = `
       <td>${ts}</td>
-      <td>${pred.task || 'attack'}</td>
-      <td>${pred.label_name || pred.label || '—'}</td>
-      <td>${formatNumber((pred.confidence || pred.score || 0) * 100, 1)}%</td>
+      <td>${taskName}</td>
+      <td>${escapeHtml(labelText)}</td>
+      <td>${confText}</td>
       <td>${pred.version || '—'}</td>
-      <td>${explanation || '—'}</td>
+      <td>${safeExplanation}</td>
     `;
     ui.mlPredictionsBody.appendChild(tr);
   });
+
+  if (ui.mlPredictionsPanel && !state.uiCollapsed.mlPredictions) {
+    requestAnimationFrame(() => {
+      ui.mlPredictionsPanel.style.maxHeight = `${ui.mlPredictionsPanel.scrollHeight}px`;
+    });
+  }
+}
+
+function applyCollapsible(panel, expanded) {
+  if (!panel) return;
+  panel.classList.toggle('collapsed', !expanded);
+  panel.classList.toggle('expanded', expanded);
+  panel.style.maxHeight = expanded ? `${panel.scrollHeight}px` : '0px';
+  panel.style.opacity = expanded ? '1' : '0';
+}
+
+function toggleMlPredictions() {
+  state.uiCollapsed.mlPredictions = !state.uiCollapsed.mlPredictions;
+  applyCollapsible(ui.mlPredictionsPanel, !state.uiCollapsed.mlPredictions);
+  if (ui.mlPredictionsToggle) {
+    ui.mlPredictionsToggle.textContent = state.uiCollapsed.mlPredictions ? 'Показать список' : 'Скрыть список';
+  }
+}
+
+function toggleFlowsPanel() {
+  state.uiCollapsed.flows = !state.uiCollapsed.flows;
+  applyCollapsible(ui.flowsPanel, !state.uiCollapsed.flows);
+  if (ui.flowsToggle) {
+    ui.flowsToggle.textContent = state.uiCollapsed.flows ? 'Показать список' : 'Скрыть список';
+  }
 }
 
 function handleMlPrediction(prediction) {
@@ -1221,6 +1402,30 @@ function bindEvents() {
       loadMlDashboard();
     });
   }
+  if (ui.mlPredictionsToggle) {
+    ui.mlPredictionsToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleMlPredictions();
+    });
+  }
+  if (ui.mlPredictionsLimit) {
+    ui.mlPredictionsLimit.addEventListener('change', (e) => {
+      state.ml.predictionLimit = e.target.value;
+      renderMlPredictions();
+    });
+  }
+  if (ui.flowsToggle) {
+    ui.flowsToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleFlowsPanel();
+    });
+  }
+  if (ui.flowTableLimit) {
+    ui.flowTableLimit.addEventListener('change', (e) => {
+      state.flowLimit = e.target.value === 'all' ? 'all' : Number(e.target.value) || 50;
+      renderTable();
+    });
+  }
 }
 
 function collectUi() {
@@ -1253,6 +1458,12 @@ function collectUi() {
   ui.autoUpdateToggle = document.getElementById('autoUpdateToggle');
   ui.mlPredictionsBody = document.querySelector('#mlPredictions tbody');
   ui.mlRefreshBtn = document.getElementById('refreshMl');
+  ui.mlPredictionsPanel = document.getElementById('mlPredictionsPanel');
+  ui.mlPredictionsToggle = document.getElementById('toggleMlPredictions');
+  ui.mlPredictionsLimit = document.getElementById('mlPredictionsLimit');
+  ui.flowsPanel = document.getElementById('flowsPanel');
+  ui.flowsToggle = document.getElementById('toggleFlows');
+  ui.flowTableLimit = document.getElementById('flowTableLimit');
 }
 
 async function verifyAuth(login, password) {
@@ -1290,6 +1501,14 @@ function initAuth() {
 
 function init() {
   collectUi();
+  if (ui.mlPredictionsLimit) {
+    state.ml.predictionLimit = ui.mlPredictionsLimit.value || 20;
+  }
+  if (ui.flowTableLimit) {
+    state.flowLimit = ui.flowTableLimit.value === 'all' ? 'all' : Number(ui.flowTableLimit.value) || 50;
+  }
+  applyCollapsible(ui.mlPredictionsPanel, true);
+  applyCollapsible(ui.flowsPanel, true);
   initCharts();
   bindEvents();
   initAuth();

@@ -7,6 +7,7 @@ from typing import Generator
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+import sqlalchemy as sa
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -30,6 +31,53 @@ SessionLocal = sessionmaker(
     expire_on_commit=False,  # ← ФИКС
     future=True
 )
+
+
+def ensure_flow_schema() -> None:
+    """Ensure the ``flows`` table matches the ORM definition.
+
+    This is a lightweight runtime safeguard for deployments where Alembic
+    migrations haven't been executed yet. Missing columns are added with the
+    correct types so the API can query without crashing.
+    """
+
+    from app.models import Flow  # imported lazily to avoid circular imports
+
+    bind = engine
+    inspector = sa.inspect(bind)
+
+    json_type = (
+        sa.dialects.postgresql.JSONB(astext_type=sa.Text())
+        if bind.dialect.name == "postgresql"
+        else sa.JSON()
+    )
+
+    expected_columns = [
+        sa.Column("task_attack", sa.String(length=32), nullable=True),
+        sa.Column("attack_confidence", sa.Float(), nullable=True),
+        sa.Column("attack_version", sa.String(length=32), nullable=True),
+        sa.Column("attack_explanation", json_type, nullable=True),
+        sa.Column("task_vpn", sa.String(length=32), nullable=True),
+        sa.Column("vpn_confidence", sa.Float(), nullable=True),
+        sa.Column("vpn_version", sa.String(length=32), nullable=True),
+        sa.Column("vpn_explanation", json_type, nullable=True),
+        sa.Column("task_anomaly", sa.String(length=32), nullable=True),
+        sa.Column("anomaly_confidence", sa.Float(), nullable=True),
+        sa.Column("anomaly_version", sa.String(length=32), nullable=True),
+        sa.Column("anomaly_explanation", json_type, nullable=True),
+        sa.Column("summary", json_type, nullable=True),
+    ]
+
+    with bind.begin() as connection:
+        if not inspector.has_table("flows"):
+            Flow.__table__.create(bind=connection, checkfirst=True)
+            return
+
+        existing = {col["name"] for col in inspector.get_columns("flows")}
+        for col in expected_columns:
+            if col.name not in existing:
+                connection.execute(sa.schema.AddColumn("flows", col.copy()))
+
 
 
 def get_db() -> Generator[Session, None, None]:
