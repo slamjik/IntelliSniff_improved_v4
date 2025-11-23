@@ -34,49 +34,47 @@ SessionLocal = sessionmaker(
 
 
 def ensure_flow_schema() -> None:
-    """Ensure the ``flows`` table matches the ORM definition.
+    """Ensure the ``flows`` table matches the ORM definition (SQLAlchemy 2.x safe)."""
 
-    This is a lightweight runtime safeguard for deployments where Alembic
-    migrations haven't been executed yet. Missing columns are added with the
-    correct types so the API can query without crashing.
-    """
-
-    from app.models import Flow  # imported lazily to avoid circular imports
+    from app.models import Base, Flow  # imported lazily to avoid circular imports
 
     bind = engine
     inspector = sa.inspect(bind)
+    dialect_name = bind.dialect.name
 
-    json_type = (
-        sa.dialects.postgresql.JSONB(astext_type=sa.Text())
-        if bind.dialect.name == "postgresql"
-        else sa.JSON()
-    )
+    def _render_sql_type(col_type: sa.types.TypeEngine) -> str:
+        if isinstance(col_type, (sa.JSON, sa.dialects.postgresql.JSONB)):
+            return "JSONB" if dialect_name == "postgresql" else "JSON"
+        if isinstance(col_type, sa.Float):
+            return "DOUBLE PRECISION"
+        if isinstance(col_type, sa.Integer):
+            return "INTEGER"
+        if isinstance(col_type, (sa.String, sa.Text)):
+            return "TEXT"
+        if isinstance(col_type, sa.DateTime):
+            if dialect_name == "postgresql":
+                return "TIMESTAMP WITH TIME ZONE" if getattr(col_type, "timezone", False) else "TIMESTAMP WITHOUT TIME ZONE"
+            return "TIMESTAMP"
+        # Fallback to dialect compilation for any unexpected type
+        return col_type.compile(dialect=bind.dialect)
 
-    expected_columns = [
-        sa.Column("task_attack", sa.String(length=32), nullable=True),
-        sa.Column("attack_confidence", sa.Float(), nullable=True),
-        sa.Column("attack_version", sa.String(length=32), nullable=True),
-        sa.Column("attack_explanation", json_type, nullable=True),
-        sa.Column("task_vpn", sa.String(length=32), nullable=True),
-        sa.Column("vpn_confidence", sa.Float(), nullable=True),
-        sa.Column("vpn_version", sa.String(length=32), nullable=True),
-        sa.Column("vpn_explanation", json_type, nullable=True),
-        sa.Column("task_anomaly", sa.String(length=32), nullable=True),
-        sa.Column("anomaly_confidence", sa.Float(), nullable=True),
-        sa.Column("anomaly_version", sa.String(length=32), nullable=True),
-        sa.Column("anomaly_explanation", json_type, nullable=True),
-        sa.Column("summary", json_type, nullable=True),
-    ]
+    # Create the table entirely if it does not yet exist
+    if not inspector.has_table("flows"):
+        Base.metadata.create_all(bind=bind, tables=[Flow.__table__])
+        return
+
+    existing = {col["name"] for col in inspector.get_columns("flows")}
+    missing_columns = [col for col in Flow.__table__.columns if col.name not in existing]
+
+    if not missing_columns:
+        return
 
     with bind.begin() as connection:
-        if not inspector.has_table("flows"):
-            Flow.__table__.create(bind=connection, checkfirst=True)
-            return
+        for col in missing_columns:
+            sql_type = _render_sql_type(col.type)
+            ddl = f'ALTER TABLE flows ADD COLUMN "{col.name}" {sql_type}'
+            connection.execute(sa.text(ddl))
 
-        existing = {col["name"] for col in inspector.get_columns("flows")}
-        for col in expected_columns:
-            if col.name not in existing:
-                connection.execute(sa.schema.AddColumn("flows", col.copy()))
 
 
 

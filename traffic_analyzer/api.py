@@ -132,11 +132,24 @@ async def _broker_loop():
 
 @app.on_event("startup")
 async def startup_event():
+    schema_ok = False
     # Make sure the primary database schema matches the ORM (runtime safety net)
     try:
-        ensure_flow_schema()
+        with session_scope():
+            ensure_flow_schema()
+        schema_ok = True
     except Exception:
         log.exception("Failed to auto-sync flows table schema")
+
+    # Reload models/metrics only after schema sync; don't break startup if it fails
+    if schema_ok:
+        try:
+            model_manager._load_bundles()
+            model_manager._load_registry()
+            model_manager._load_metrics()
+        except Exception:
+            log.exception("Failed to refresh models during startup")
+
     asyncio.create_task(_broker_loop())
 
 

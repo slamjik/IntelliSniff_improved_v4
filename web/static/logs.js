@@ -25,7 +25,6 @@ const featureTranslations = {
   bwd_packet_length_mean: 'средняя длина обратных пакетов',
   bwd_packet_length_std: 'СКО длины обратных пакетов',
   flow_duration: 'длительность потока (мс)',
-
   flow_iat_mean: 'средний интервал между пакетами',
   flow_iat_std: 'СКО интервалов между пакетами',
   fwd_iat_total: 'сумма интервалов прямых пакетов',
@@ -70,7 +69,6 @@ const featureTranslations = {
   label_name: 'Имя метки',
   confidence: 'Уверенность',
   summary: 'Сводка',
-
 };
 
 function translateFeatureKey(key) {
